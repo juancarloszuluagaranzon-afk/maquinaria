@@ -37,7 +37,7 @@ export function TechnicalRequestForm() {
     const [selectedMaquinaria, setSelectedMaquinaria] = useState('');
     const [horasEstimadas, setHorasEstimadas] = useState('');
     const [observaciones, setObservaciones] = useState('');
-    const [filteredActividades, setFilteredActividades] = useState<Actividad[]>([]);
+    const [filteredLabors, setFilteredLabors] = useState<Labor[]>([]);
 
     // UI
     const [submitting, setSubmitting] = useState(false);
@@ -69,7 +69,7 @@ export function TechnicalRequestForm() {
                 const [labRes, actRes, priRes, maqRes, relRes] = await Promise.all([
                     supabase.from('labores').select('id, nombre'),
                     supabase.from('actividades').select('id, nombre, codigo'),
-                    supabase.from('prioridades').select('id, nivel, asunto').order('nivel', { ascending: false }),
+                    supabase.from('prioridades').select('id, nivel, asunto').order('nivel', { ascending: true }), // Sorted by level ascending for dropdown
                     supabase.from('maquinaria').select('id, nombre, tarifa_hora'),
                     supabase.from('actividad_labores').select('actividad_id, labor_id')
                 ]);
@@ -97,24 +97,24 @@ export function TechnicalRequestForm() {
         init();
     }, [user]);
 
-    // Filter Activities
+    // Filter Labors when Activity changes
     useEffect(() => {
-        if (!selectedLabor) {
-            setFilteredActividades([]);
-            setSelectedActividad('');
+        if (!selectedActividad) {
+            setFilteredLabors([]);
+            setSelectedLabor('');
             return;
         }
 
-        // Filter based on Many-to-Many relationship
-        const allowedActivityIds = new Set(
+        // Filter based on Many-to-Many relationship (Activity -> Labors)
+        const allowedLaborIds = new Set(
             actividadLabores
-                .filter(rel => rel.labor_id === selectedLabor)
-                .map(rel => rel.actividad_id)
+                .filter(rel => rel.actividad_id === selectedActividad)
+                .map(rel => rel.labor_id)
         );
 
-        setFilteredActividades(actividades.filter(a => allowedActivityIds.has(a.id)));
-        setSelectedActividad('');
-    }, [selectedLabor, actividades, actividadLabores]);
+        setFilteredLabors(labores.filter(l => allowedLaborIds.has(l.id)));
+        setSelectedLabor(''); // Reset Labor
+    }, [selectedActividad, labores, actividadLabores]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -239,54 +239,56 @@ export function TechnicalRequestForm() {
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">A</div>
-                        <h3 className="text-lg font-semibold text-white/90">Ubicación</h3>
+                        <h3 className="text-lg font-semibold text-white/90">Ubicación (Sector-Suerte)</h3>
                     </div>
                     <GlassCombobox
-                        label="Suerte (Código / Hacienda)"
+                        label="Suerte"
                         onSelect={setSelectedSuerte}
                         error={!selectedSuerte && submitting ? "Requerido" : undefined}
                         filters={userZone ? { zona: userZone } : undefined}
                     />
                 </section>
 
-                {/* Step B & C: Labor y Actividad */}
+                {/* Step B: Actividad Requerida */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">B</div>
-                        <h3 className="text-lg font-semibold text-white/90">Labor Requerida</h3>
+                        <h3 className="text-lg font-semibold text-white/90">Actividad Requerida</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <GlassSelect
-                            label="Tipo de Labor"
-                            placeholder="Seleccione labor..."
-                            options={labores.map(l => ({ value: l.id, label: l.nombre }))}
-                            value={selectedLabor}
-                            onChange={(e) => setSelectedLabor(e.target.value)}
-                            error={!selectedLabor && submitting ? "Requerido" : undefined}
-                        />
-                        <div>
-                            <GlassSelect
-                                label="Código Actividad"
-                                placeholder={selectedLabor ? "Seleccione código..." : "..."}
-                                options={filteredActividades.map(a => ({ value: a.id, label: a.codigo.toString() }))}
-                                value={selectedActividad}
-                                onChange={(e) => setSelectedActividad(e.target.value)}
-                                disabled={!selectedLabor}
-                                error={!selectedActividad && submitting ? "Requerido" : undefined}
-                            />
-                            {selectedActividad && (
-                                <div className="mt-2 text-sm text-brand-liquid font-medium animate-in fade-in slide-in-from-top-1">
-                                    {actividades.find(a => a.id === selectedActividad)?.nombre}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <GlassSelect
+                        label="Actividad"
+                        placeholder="Seleccione actividad..."
+                        options={actividades.map(a => ({ value: a.id, label: `${a.codigo} - ${a.nombre}` }))}
+                        value={selectedActividad}
+                        onChange={(e) => {
+                            setSelectedActividad(e.target.value);
+                            setSelectedLabor(''); // Reset Labor when Activity changes
+                        }}
+                        error={!selectedActividad && submitting ? "Requerido" : undefined}
+                    />
                 </section>
 
-                {/* Step C: Maquinaria Sugerida */}
+                {/* Step C: Labor Requerida */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">C</div>
+                        <h3 className="text-lg font-semibold text-white/90">Labor Requerida</h3>
+                    </div>
+                    <GlassSelect
+                        label="Labor"
+                        placeholder={selectedActividad ? "Seleccione labor..." : "Primero seleccione actividad"}
+                        options={filteredLabors.map(l => ({ value: l.id, label: l.nombre }))}
+                        value={selectedLabor}
+                        onChange={(e) => setSelectedLabor(e.target.value)}
+                        disabled={!selectedActividad}
+                        error={!selectedLabor && submitting ? "Requerido" : undefined}
+                    />
+                </section>
+
+                {/* Step D: Maquinaria Sugerida */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">D</div>
                         <h3 className="text-lg font-semibold text-white/90">Maquinaria Sugerida (Opcional)</h3>
                     </div>
                     <GlassSelect
@@ -298,83 +300,54 @@ export function TechnicalRequestForm() {
                     />
                 </section>
 
-                {/* Step D: Urgencia */}
-                <section className="space-y-4">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">D</div>
-                        <h3 className="text-lg font-semibold text-white/90">Nivel de Urgencia</h3>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {prioridades.map((p) => {
-                            const isSelected = selectedPrioridad === p.id;
-                            // Dynamic Color Logic
-                            let baseColor = "border-white/10 hover:bg-white/5";
-                            if (p.nivel >= 8) baseColor = isSelected ? "border-red-500 bg-red-500/20" : "border-red-500/30 hover:border-red-500/50";
-                            else if (p.nivel >= 5) baseColor = isSelected ? "border-amber-500 bg-amber-500/20" : "border-amber-500/30 hover:border-amber-500/50";
-                            else baseColor = isSelected ? "border-emerald-500 bg-emerald-500/20" : "border-emerald-500/30 hover:border-emerald-500/50";
-
-                            return (
-                                <button
-                                    key={p.id}
-                                    type="button"
-                                    onClick={() => setSelectedPrioridad(p.id)}
-                                    className={`
-                                        relative group flex items-start gap-3 p-4 rounded-xl text-left border transition-all duration-300
-                                        ${baseColor}
-                                        ${isSelected ? 'scale-[1.02] shadow-lg shadow-black/20' : ''}
-                                    `}
-                                >
-                                    <div className={`
-                                        w-2 h-full absolute left-0 top-0 bottom-0 rounded-l-xl
-                                        ${p.nivel >= 8 ? 'bg-red-500' : p.nivel >= 5 ? 'bg-amber-500' : 'bg-emerald-500'}
-                                        ${isSelected ? 'opacity-100' : 'opacity-30 group-hover:opacity-60'}
-                                    `} />
-
-                                    <div className="pl-3 w-full">
-                                        <div className="flex justify-between w-full">
-                                            <span className="text-white font-medium text-sm">{p.asunto}</span>
-                                            {isSelected && <CheckCircle2 size={16} className="text-white" />}
-                                        </div>
-                                        <div className="mt-1 flex items-center justify-between">
-                                            <span className="text-[10px] uppercase tracking-wider text-white/50">Nivel {p.nivel}</span>
-                                        </div>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                    {/* Explicit Error Message for Radio Group if needed, using general toast for now */}
-                </section>
-
-                {/* Step E: Estimación */}
+                {/* Step E: Prioridad */}
                 <section className="space-y-4">
                     <div className="flex items-center gap-2 mb-2">
                         <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">E</div>
-                        <h3 className="text-lg font-semibold text-white/90">Detalles y Estimación</h3>
+                        <h3 className="text-lg font-semibold text-white/90">Prioridad</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <GlassInput
-                                type="number"
-                                label="Horas Est."
-                                placeholder="0.0"
-                                step="0.5"
-                                value={horasEstimadas}
-                                onChange={(e) => setHorasEstimadas(e.target.value)}
-                                icon={<Clock size={16} />}
-                                error={!horasEstimadas && submitting ? "Requerido" : undefined}
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <GlassTextarea
-                                label="Observaciones (Opcional)"
-                                placeholder="Condiciones de terreno, accesos, etc."
-                                value={observaciones}
-                                onChange={(e) => setObservaciones(e.target.value)}
-                                className="h-32"
-                            />
-                        </div>
+                    <GlassSelect
+                        label="Nivel de Prioridad"
+                        placeholder="Seleccione prioridad..."
+                        options={prioridades.map(p => ({ value: p.id, label: `${p.nivel} - ${p.asunto}` }))}
+                        value={selectedPrioridad}
+                        onChange={(e) => setSelectedPrioridad(e.target.value)}
+                        error={!selectedPrioridad && submitting ? "Requerido" : undefined}
+                    />
+                </section>
+
+                {/* Step F: Tiempo Estimado */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">F</div>
+                        <h3 className="text-lg font-semibold text-white/90">Tiempo Estimado</h3>
                     </div>
+                    <GlassInput
+                        type="number"
+                        label="Horas"
+                        placeholder="0.0"
+                        step="0.5"
+                        min="0"
+                        value={horasEstimadas}
+                        onChange={(e) => setHorasEstimadas(e.target.value)}
+                        icon={<Clock size={16} />}
+                        error={!horasEstimadas && submitting ? "Requerido" : undefined}
+                    />
+                </section>
+
+                {/* Step G: Observaciones */}
+                <section className="space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-brand-liquid/20 flex items-center justify-center text-xs font-bold text-brand-liquid border border-brand-liquid/30">G</div>
+                        <h3 className="text-lg font-semibold text-white/90">Observaciones</h3>
+                    </div>
+                    <GlassTextarea
+                        label="Detalles Adicionales"
+                        placeholder="Condiciones de terreno, accesos, etc."
+                        value={observaciones}
+                        onChange={(e) => setObservaciones(e.target.value)}
+                        className="h-32"
+                    />
                 </section>
 
                 <div className="pt-6 border-t border-white/10 flex justify-between items-center">

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -86,12 +86,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Gestión Zona</div>
                             <NavLink to="/dashboard" className={linkClass} onClick={() => onClose()}>
-                                <Kanban size={20} />
-                                <span>Tablero</span>
+                                <LayoutDashboard size={20} />
+                                <span>Resumen</span>
                             </NavLink>
-                            <NavLink to="/aprobaciones" className={linkClass} onClick={() => onClose()}>
+                            <NavLink end to="/aprobaciones" className={linkClass} onClick={() => onClose()}>
+                                <Clock size={20} />
+                                <span>Por Aprobar</span>
+                            </NavLink>
+                            <NavLink to="/aprobaciones?status=APROBADO_ZONA" className={linkClass} onClick={() => onClose()}>
                                 <CheckCircle size={20} />
-                                <span>Aprobaciones</span>
+                                <span>Aprobadas</span>
+                            </NavLink>
+                            <NavLink to="/aprobaciones?status=RECHAZADO" className={linkClass} onClick={() => onClose()}>
+                                <X size={20} />
+                                <span>Rechazadas</span>
                             </NavLink>
                         </>
                     )}
