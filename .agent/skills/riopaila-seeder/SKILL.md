@@ -31,7 +31,12 @@ This skill handles the complex ETL (Extract, Transform, Load) process required t
     *   **Default Password:** Use `'Riopaila2026'` for all generated users.
 
 3.  **Fixed Catalogs:**
-    *   Since the CSV doesn't contain `Labores` (Tasks) or `Maquinaria` (Machinery) master lists, generate generic SQL inserts for these tables (e.g., Tractor A, Harvester B, Pruning, Fertilizing) to ensure the system is usable.
+    *   **Contractors & Machinery:** Use the following specific data for seeding:
+        *   **Serviexcavaciones**: Motoniveladora (155,000), Retro 130 (185,200), Enllantada (119,400).
+        *   **Serviretro**: Enllantada (119,400), Retro X8 (137,100).
+        *   **Castor Amigo**: Retro Dossan (206,200).
+        *   **Riopaila Castilla**: Retro 320 (233,356).
+        *   **Labores (Tasks):** Generate generic SQL inserts if not provided (e.g., Preparation, Planting, Harvest).
 
 4.  **Output Format:**
     *   Generate a single, transactional SQL file (checking for duplicates).

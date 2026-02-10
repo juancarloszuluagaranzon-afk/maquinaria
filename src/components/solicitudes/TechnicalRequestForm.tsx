@@ -10,7 +10,7 @@ import { GlassToast } from '../ui/GlassToast';
 import { Clock, Send, CheckCircle2, Loader2, Info, MessageCircle, Home } from 'lucide-react';
 
 interface Labor { id: string; nombre: string; }
-interface Actividad { id: string; nombre: string; labor_id: string; codigo: number; }
+interface Actividad { id: string; nombre: string; codigo: number; }
 interface Prioridad { id: string; nivel: number; asunto: string; }
 interface Maquinaria { id: string; nombre: string; tarifa_hora: number; }
 
@@ -23,6 +23,7 @@ export function TechnicalRequestForm() {
     const [actividades, setActividades] = useState<Actividad[]>([]);
     const [prioridades, setPrioridades] = useState<Prioridad[]>([]);
     const [maquinariaList, setMaquinariaList] = useState<Maquinaria[]>([]);
+    const [actividadLabores, setActividadLabores] = useState<{ actividad_id: string; labor_id: string }[]>([]);
 
     // User Context
     const [userZone, setUserZone] = useState<number | null>(null);
@@ -65,22 +66,25 @@ export function TechnicalRequestForm() {
                 }
 
                 // Get Catalogs
-                const [labRes, actRes, priRes, maqRes] = await Promise.all([
+                const [labRes, actRes, priRes, maqRes, relRes] = await Promise.all([
                     supabase.from('labores').select('id, nombre'),
-                    supabase.from('actividades').select('id, nombre, labor_id, codigo'),
+                    supabase.from('actividades').select('id, nombre, codigo'),
                     supabase.from('prioridades').select('id, nivel, asunto').order('nivel', { ascending: false }),
-                    supabase.from('maquinaria').select('id, nombre, tarifa_hora')
+                    supabase.from('maquinaria').select('id, nombre, tarifa_hora'),
+                    supabase.from('actividad_labores').select('actividad_id, labor_id')
                 ]);
 
                 if (labRes.error) throw labRes.error;
                 if (actRes.error) throw actRes.error;
                 if (priRes.error) throw priRes.error;
                 if (maqRes.error) throw maqRes.error;
+                if (relRes.error) throw relRes.error;
 
                 setLabores(labRes.data || []);
                 setActividades(actRes.data || []);
                 setPrioridades(priRes.data || []);
                 setMaquinariaList(maqRes.data || []);
+                setActividadLabores(relRes.data || []);
 
             } catch (err) {
                 console.error("Initialization error:", err);
@@ -100,9 +104,17 @@ export function TechnicalRequestForm() {
             setSelectedActividad('');
             return;
         }
-        setFilteredActividades(actividades.filter(a => a.labor_id === selectedLabor));
+
+        // Filter based on Many-to-Many relationship
+        const allowedActivityIds = new Set(
+            actividadLabores
+                .filter(rel => rel.labor_id === selectedLabor)
+                .map(rel => rel.actividad_id)
+        );
+
+        setFilteredActividades(actividades.filter(a => allowedActivityIds.has(a.id)));
         setSelectedActividad('');
-    }, [selectedLabor, actividades]);
+    }, [selectedLabor, actividades, actividadLabores]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

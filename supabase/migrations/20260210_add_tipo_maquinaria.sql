@@ -1,0 +1,1 @@
+ALTER TABLE labores ADD COLUMN IF NOT EXISTS tipo_maquinaria TEXT;

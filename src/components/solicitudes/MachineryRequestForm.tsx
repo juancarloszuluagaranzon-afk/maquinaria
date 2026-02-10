@@ -17,7 +17,6 @@ interface Labor {
 interface Actividad {
     id: string;
     nombre: string;
-    labor_id: string;
 }
 
 interface Prioridad {
@@ -35,8 +34,9 @@ export function MachineryRequestForm() {
     const [actividades, setActividades] = useState<Actividad[]>([]);
     const [prioridades, setPrioridades] = useState<Prioridad[]>([]);
 
-    // Filtered lists
+    // FILTERED LISTS
     const [filteredActividades, setFilteredActividades] = useState<Actividad[]>([]);
+    const [actividadLabores, setActividadLabores] = useState<{ actividad_id: string; labor_id: string }[]>([]);
 
     // Form State
     const [selectedSuerte, setSelectedSuerte] = useState<any>(null);
@@ -56,19 +56,22 @@ export function MachineryRequestForm() {
         const fetchCatalogs = async () => {
             setLoading(true);
             try {
-                const [labRes, actRes, priRes] = await Promise.all([
+                const [labRes, actRes, priRes, relRes] = await Promise.all([
                     supabase.from('labores').select('id, nombre'),
-                    supabase.from('actividades').select('id, nombre, labor_id'),
-                    supabase.from('prioridades').select('id, nivel, asunto').order('nivel', { ascending: false })
+                    supabase.from('actividades').select('id, nombre'),
+                    supabase.from('prioridades').select('id, nivel, asunto').order('nivel', { ascending: false }),
+                    supabase.from('actividad_labores').select('actividad_id, labor_id')
                 ]);
 
                 if (labRes.error) throw labRes.error;
                 if (actRes.error) throw actRes.error;
                 if (priRes.error) throw priRes.error;
+                if (relRes.error) throw relRes.error;
 
                 setLabores(labRes.data || []);
                 setActividades(actRes.data || []);
                 setPrioridades(priRes.data || []);
+                setActividadLabores(relRes.data || []);
             } catch (err) {
                 console.error('Error fetching catalogs:', err);
                 setToast({ message: 'Error cargando datos del formulario.', type: 'error' });
@@ -87,10 +90,17 @@ export function MachineryRequestForm() {
             setSelectedActividad('');
             return;
         }
-        const filtered = actividades.filter(a => a.labor_id === selectedLabor);
-        setFilteredActividades(filtered);
+
+        // Filter based on Many-to-Many relationship
+        const allowedActivityIds = new Set(
+            actividadLabores
+                .filter(rel => rel.labor_id === selectedLabor)
+                .map(rel => rel.actividad_id)
+        );
+
+        setFilteredActividades(actividades.filter(a => allowedActivityIds.has(a.id)));
         setSelectedActividad(''); // Reset activity selection
-    }, [selectedLabor, actividades]);
+    }, [selectedLabor, actividades, actividadLabores]);
 
     if (loading) {
         return (
