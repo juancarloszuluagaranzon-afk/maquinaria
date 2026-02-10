@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -103,6 +103,17 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
                                 <Kanban size={20} />
                                 <span>Programación</span>
+                            </NavLink>
+                        </>
+                    )}
+
+                    {/* Enlaces para OPERADORES */}
+                    {role === 'operador' && (
+                        <>
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Mi Turno</div>
+                            <NavLink to="/operador" className={linkClass} onClick={() => onClose()}>
+                                <Tractor size={20} />
+                                <span>Ejecución</span>
                             </NavLink>
                         </>
                     )}

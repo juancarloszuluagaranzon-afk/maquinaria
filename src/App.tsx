@@ -6,6 +6,7 @@ import TechnicianDashboard from './pages/TechnicianDashboard';
 import ZoneManagerDashboard from './pages/ZoneManagerDashboard';
 import AnalystDashboard from './pages/AnalystDashboard';
 import NewRequest from './pages/NewRequest';
+import OperatorDashboard from './pages/OperatorDashboard';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 import { Toaster } from 'react-hot-toast';
@@ -25,6 +26,7 @@ function App() {
                         <Route path="/solicitudes" element={<TechnicianDashboard />} />
                         <Route path="/aprobaciones" element={<ZoneManagerDashboard />} />
                         <Route path="/analista" element={<AnalystDashboard />} />
+                        <Route path="/operador" element={<OperatorDashboard />} />
                     </Route>
                 </Routes>
                 <Toaster position="bottom-right" toastOptions={{

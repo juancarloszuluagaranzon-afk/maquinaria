@@ -1,6 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import TechnicianDashboard from './TechnicianDashboard';
 import ZoneManagerDashboard from './ZoneManagerDashboard';
+import OperatorDashboard from './OperatorDashboard';
 
 export default function Dashboard() {
     const { profile, loading } = useAuth();
@@ -22,6 +23,11 @@ export default function Dashboard() {
     // 3. Vista para ANALISTAS (Futuro)
     if (profile?.rol === 'analista') {
         return <div className="p-8 text-white">🚧 Dashboard de Analista en Construcción 🚧</div>;
+    }
+
+    // 4. Vista para OPERADORES
+    if (profile?.rol === 'operador') {
+        return <OperatorDashboard />;
     }
 
     // Fallback por seguridad
