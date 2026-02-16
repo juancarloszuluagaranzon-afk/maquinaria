@@ -51,18 +51,24 @@ export function TechnicalRequestForm() {
             if (!user) return;
             setUserContextLoading(true);
             try {
-                // Get User Zone
+                // Get User Zone & Assigned Haciendas
                 const { data: userData, error: userError } = await supabase
                     .from('usuarios')
-                    .select('zona')
+                    .select('zona, hacienda_asignada')
                     .eq('id', user.id)
                     .single();
 
                 if (userError) {
-                    // Try getting from auth meta if table fails (fallback) or just log
                     console.error('Error fetching user profile:', userError);
                 } else {
                     setUserZone(userData?.zona);
+                    // Store hacienda_asignada in a ref or state if needed, 
+                    // or just use it directly in the query below if we moved the catalogs fetch here.
+                    // But catalogs are fetched in parallel. 
+                    // Let's optimize: Fetch catalogs AFTER we know the user context to apply filters immediately if possible.
+                    // For now, I'll update the GlassCombobox to filter CLIENT-SIDE or updated the Suerte Fetch logic.
+                    // Wait, GlassCombobox fetches suertes internally? 
+                    // Let's check GlassCombobox. If it fetches, we need to pass filters.
                 }
 
                 // Get Catalogs
@@ -138,6 +144,7 @@ export function TechnicalRequestForm() {
                     horas_estimadas: parseFloat(horasEstimadas),
                     observaciones: observaciones,
                     estado: 'PENDIENTE_APROBACION',
+                    fecha_programada: new Date().toISOString().split('T')[0],
                     created_at: new Date().toISOString()
                 })
                 .select();
@@ -245,7 +252,11 @@ export function TechnicalRequestForm() {
                         label="Suerte"
                         onSelect={setSelectedSuerte}
                         error={!selectedSuerte && submitting ? "Requerido" : undefined}
-                        filters={userZone ? { zona: userZone } : undefined}
+                        filters={userZone ? {
+                            zona: userZone,
+                            // Pass hacienda_asignada if available
+                            ...(user?.hacienda_asignada && user.hacienda_asignada.length > 0 ? { hacienda: user.hacienda_asignada } : {})
+                        } : undefined}
                     />
                 </section>
 

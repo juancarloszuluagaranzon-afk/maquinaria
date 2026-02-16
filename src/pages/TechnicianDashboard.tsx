@@ -1,20 +1,97 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Tractor, Clock, AlertTriangle, MapPin, LogOut } from 'lucide-react';
+import { Plus, Tractor, Clock, MapPin, LogOut, CheckCircle, FileText, PenTool } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-// Adjusted import if necessary, but sticking to user request for now unless I find it elsewhere
 import { GlassCard } from '../components/ui/GlassCard';
+import SignatureCanvas from 'react-signature-canvas';
+import toast from 'react-hot-toast';
 
 export default function TechnicianDashboard() {
     const { user, profile, signOut } = useAuth();
     const navigate = useNavigate();
     const [requests, setRequests] = useState<any[]>([]);
+    const [executions, setExecutions] = useState<any[]>([]);
+    const [signedExecutions, setSignedExecutions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'solicitudes' | 'ejecuciones' | 'firmadas'>('solicitudes');
+
+    // Signature Modal
+    const [showSignModal, setShowSignModal] = useState(false);
+    const [selectedExecution, setSelectedExecution] = useState<any>(null);
+    const sigCanvas = useRef<SignatureCanvas>(null);
 
     useEffect(() => {
-        fetchMyRequests();
-    }, [user]);
+        const loadData = async () => {
+            setLoading(true);
+            if (activeTab === 'solicitudes') {
+                await fetchMyRequests();
+            } else if (activeTab === 'ejecuciones') {
+                await fetchPendingSignatures();
+            } else {
+                await fetchSignedExecutions();
+            }
+            setLoading(false);
+        };
+        loadData();
+    }, [user, activeTab]);
+
+    const fetchSignedExecutions = async () => {
+        try {
+            if (!user) return;
+            const { data, error } = await supabase
+                .from('ejecuciones')
+                .select(`
+                    *,
+                    programaciones!inner (
+                        tecnico_id,
+                        suertes (codigo, hacienda),
+                        labores (nombre),
+                        actividades (nombre)
+                    ),
+                    maquinaria (nombre)
+                `)
+                .eq('programaciones.tecnico_id', user.id)
+                .not('firma_tecnico_url', 'is', null) // Signed
+                .order('fin', { ascending: false });
+
+            if (error) throw error;
+            setSignedExecutions(data || []);
+        } catch (error) {
+            console.error('Error fetching signed:', error);
+            toast.error('Error cargando ejecuciones firmadas');
+        }
+    };
+
+    const fetchPendingSignatures = async () => {
+        try {
+            if (!user) return;
+
+            // Fetch executions for my programaciones that are finished but not signed
+            const { data, error } = await supabase
+                .from('ejecuciones')
+                .select(`
+                    *,
+                    programaciones!inner (
+                        tecnico_id,
+                        suertes (codigo, hacienda),
+                        labores (nombre),
+                        actividades (nombre)
+                    ),
+                    maquinaria (nombre)
+                `)
+                .eq('programaciones.tecnico_id', user.id)
+                .is('firma_tecnico_url', null)
+                .not('recibo_url', 'is', null)
+                .order('fin', { ascending: false });
+
+            if (error) throw error;
+            setExecutions(data || []);
+        } catch (error) {
+            console.error('Error fetching signatures:', error);
+            toast.error('Error cargando ejecuciones para firma');
+        }
+    };
 
     const fetchMyRequests = async () => {
         try {
@@ -25,13 +102,13 @@ export default function TechnicianDashboard() {
             const { data, error } = await supabase
                 .from('programaciones')
                 .select(`
-          *,
-          suertes (codigo, hacienda),
-          labores (nombre),
-          actividades (nombre),
-          prioridades (asunto, nivel),
-          maquinaria (tarifa_hora)
-        `)
+                  *,
+                  suertes (codigo, hacienda, area_neta),
+                  labores (nombre),
+                  actividades (nombre),
+                  prioridades (asunto, nivel),
+                  maquinaria (tarifa_hora)
+                `)
                 .eq('tecnico_id', user.id)
                 .order('created_at', { ascending: false });
 
@@ -39,9 +116,66 @@ export default function TechnicianDashboard() {
             setRequests(data || []);
         } catch (error) {
             console.error('Error cargando solicitudes:', error);
-        } finally {
-            setLoading(false);
         }
+    };
+
+    const handleOpenSignModal = (execution: any) => {
+        setSelectedExecution(execution);
+        setShowSignModal(true);
+    };
+
+    const handleSaveSignature = async () => {
+        if (!processSignature()) return;
+    };
+
+    const processSignature = async () => {
+        if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+            toast.error('Por favor firme antes de guardar');
+            return false;
+        }
+
+        try {
+            // Access the underlying canvas to get the blob
+            // Use getCanvas() as getTrimmedCanvas() is causing bundler issues
+            // @ts-ignore
+            const canvas = sigCanvas.current.getCanvas();
+            const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+
+            if (!blob || !selectedExecution) return false;
+
+            const fileName = `signature_${selectedExecution.id}_${Date.now()}.png`;
+            const { error: uploadError } = await supabase.storage
+                .from('receipts') // Reuse receipts bucket
+                .upload(fileName, blob);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('receipts')
+                .getPublicUrl(fileName);
+
+            const { error: updateError } = await supabase.rpc('sign_execution', {
+                execution_id: selectedExecution.id,
+                signature_url: publicUrl
+            });
+
+            if (updateError) throw updateError;
+
+            toast.success('Documento firmado correctamente');
+            setShowSignModal(false);
+            // Refresh list
+            fetchPendingSignatures();
+            return true;
+
+        } catch (error: any) {
+            console.error('Error signing:', error);
+            toast.error('Error al guardar la firma: ' + error.message);
+            return false;
+        }
+    };
+
+    const clearSignature = () => {
+        sigCanvas.current?.clear();
     };
 
     const getStatusColor = (status: string) => {
@@ -79,65 +213,276 @@ export default function TechnicianDashboard() {
                 </button>
             </header>
 
+            {/* Tabs */}
+            <div className="flex gap-4 border-b border-white/10 pb-4 overflow-x-auto">
+                <button
+                    onClick={() => setActiveTab('solicitudes')}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'solicitudes' ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                >
+                    Mis Solicitudes
+                </button>
+                <button
+                    onClick={() => setActiveTab('ejecuciones')}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'ejecuciones' ? 'bg-blue-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                >
+                    Validar ({executions.length})
+                </button>
+                <button
+                    onClick={() => setActiveTab('firmadas')}
+                    className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'firmadas' ? 'bg-purple-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                >
+                    Ejecutadas
+                </button>
+            </div>
+
             {/* Lista de Tarjetas */}
             {loading ? (
                 <div className="text-center py-10 text-white/50 animate-pulse">Cargando registros...</div>
-            ) : requests.length === 0 ? (
-                <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
-                    <Tractor className="w-12 h-12 text-white/20 mx-auto mb-4" />
-                    <p className="text-white/60">No tienes solicitudes pendientes.</p>
-                    <p className="text-sm text-white/40">¡Crea la primera ahora!</p>
-                </div>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {requests.map((req) => (
-                        <GlassCard key={req.id} className="relative group hover:border-white/30 transition-all">
-                            {/* Badge de Estado */}
-                            <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(req.estado)}`}>
-                                {req.estado.replace('_', ' ')}
+                <>
+                    {activeTab === 'solicitudes' && (
+                        requests.length === 0 ? (
+                            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                <Tractor className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                                <p className="text-white/60">No tienes solicitudes pendientes.</p>
+                                <p className="text-sm text-white/40">¡Crea la primera ahora!</p>
                             </div>
-
-                            {/* Título: Suerte */}
-                            <div className="flex items-center gap-2 mb-3 text-emerald-400">
-                                <MapPin size={18} />
-                                <span className="font-bold text-lg">{req.suertes?.codigo}</span>
-                                <span className="text-xs text-white/50 ml-1">({req.suertes?.hacienda})</span>
-                            </div>
-
-                            {/* Detalles */}
-                            <div className="space-y-2 text-sm text-white/80">
-                                <div className="flex items-center gap-2">
-                                    <Tractor size={16} className="text-blue-400" />
-                                    <span>{req.labores?.nombre}</span>
-                                </div>
-                                <div className="pl-6 text-white/50 text-xs">
-                                    ↳ {req.actividades?.nombre}
-                                </div>
-
-                                {/* Prioridad */}
-                                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10">
-                                    <AlertTriangle size={14} className={req.prioridades?.nivel <= 3 ? "text-red-400" : "text-yellow-400"} />
-                                    <span className="text-xs font-mono">
-                                        {req.prioridades?.asunto} (Nivel {req.prioridades?.nivel})
-                                    </span>
-                                </div>
-
-                                {/* Fecha y Costo Evaluado */}
-                                <div className="flex flex-col gap-1 text-white/30 text-xs mt-1">
-                                    <div className="flex items-center gap-2">
-                                        <Clock size={12} />
-                                        {new Date(req.created_at).toLocaleDateString()}
-                                    </div>
-
-                                    {req.maquinaria?.tarifa_hora && (
-                                        <div className="flex items-center gap-2 text-sm text-emerald-400 font-bold bg-emerald-500/10 px-3 py-1.5 rounded-lg w-fit mt-1 border border-emerald-500/20">
-                                            <span>{formatCurrency(req.horas_estimadas * req.maquinaria.tarifa_hora)}</span>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {requests.map((req) => (
+                                    <GlassCard key={req.id} className="relative group hover:border-white/30 transition-all">
+                                        {/* Badge de Estado */}
+                                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(req.estado)}`}>
+                                            {req.estado.replace('_', ' ')}
                                         </div>
-                                    )}
+
+                                        {/* Título: Suerte */}
+                                        <div className="flex items-center gap-2 mb-3 text-emerald-400">
+                                            <MapPin size={18} />
+                                            <span className="font-bold text-lg">{req.suertes?.codigo}</span>
+                                            <span className="text-xs text-white/50 ml-1">({req.suertes?.hacienda})</span>
+                                        </div>
+
+                                        {/* Detalles */}
+                                        <div className="space-y-2 text-sm text-white/80">
+                                            <div className="flex items-center gap-2">
+                                                <Tractor size={16} className="text-blue-400" />
+                                                <span>{req.labores?.nombre}</span>
+                                            </div>
+                                            <div className="pl-6 text-white/50 text-xs">
+                                                ↳ {req.actividades?.nombre}
+                                            </div>
+
+                                            {/* Footer con Fecha, Costos y Prioridad */}
+                                            <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
+                                                <div className="flex items-center gap-2 text-white/30 text-xs">
+                                                    <Clock size={12} />
+                                                    {new Date(req.created_at).toLocaleDateString()}
+                                                </div>
+
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    {req.maquinaria?.tarifa_hora ? (
+                                                        <div className="flex gap-2">
+                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono whitespace-nowrap">
+                                                                <span className="text-white/40 mr-1">Total:</span>
+                                                                {formatCurrency(req.horas_estimadas * req.maquinaria.tarifa_hora)}
+                                                            </div>
+                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono whitespace-nowrap">
+                                                                <span className="text-white/40 mr-1">$/Ha:</span>
+                                                                {formatCurrency((req.horas_estimadas * req.maquinaria.tarifa_hora) / (req.suertes?.area_neta || 1))}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-white/20 italic">Sin tarifa definida</div>
+                                                    )}
+
+                                                    <div className={`px-2 py-1 rounded text-xs font-mono border whitespace-nowrap ${req.prioridades?.nivel <= 3 ? "text-red-400 border-red-400/30 bg-red-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
+                                                        {req.prioridades?.asunto || 'Normal'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </GlassCard>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {activeTab === 'ejecuciones' && (
+                        executions.length === 0 ? (
+                            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                <CheckCircle className="w-12 h-12 text-blue-400 mx-auto mb-4" />
+                                <p className="text-white/60">No hay documentos pendientes de firma.</p>
+                                <p className="text-sm text-white/40">¡Todo al día!</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {executions.map((exec) => (
+                                    <GlassCard key={exec.id} className="relative group hover:border-blue-400/30 transition-all">
+                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border border-blue-400/30 bg-blue-400/10 text-blue-400">
+                                            PENDIENTE FIRMA
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mb-3 text-blue-400">
+                                            <FileText size={18} />
+                                            <span className="font-bold text-lg">Reporte de Labor</span>
+                                        </div>
+
+                                        <div className="space-y-2 text-sm text-white/80">
+                                            <p className="font-bold text-white">{exec.programaciones?.labores?.nombre}</p>
+                                            <p className="text-xs text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
+
+                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                                                <Tractor size={14} />
+                                                <span>{exec.maquinaria?.nombre}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={14} />
+                                                <span>{new Date(exec.fin).toLocaleDateString()}</span>
+                                                <span className="text-white/40">({exec.horas_reales} hrs)</span>
+                                            </div>
+
+                                            <div className="flex gap-2 mt-4">
+                                                <a
+                                                    href={exec.recibo_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-white/10 relative z-10"
+                                                >
+                                                    Ver Recibo
+                                                </a>
+                                                <button
+                                                    onClick={() => handleOpenSignModal(exec)}
+                                                    className="flex-1 bg-blue-500 hover:bg-blue-400 text-black text-center py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 relative z-10"
+                                                >
+                                                    <PenTool size={14} />
+                                                    Firmar
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </GlassCard>
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {activeTab === 'firmadas' && (
+                        signedExecutions.length === 0 ? (
+                            <div className="text-center py-12 bg-white/5 rounded-2xl border border-white/10">
+                                <CheckCircle className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+                                <p className="text-white/60">No hay labores ejecutadas aún.</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {signedExecutions.map((exec) => (
+                                    <GlassCard key={exec.id} className="relative group hover:border-purple-400/30 transition-all bg-purple-500/5">
+                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border border-purple-400/30 bg-purple-400/10 text-purple-400 flex items-center gap-1">
+                                            <CheckCircle size={12} /> FIRMADO
+                                        </div>
+
+                                        <div className="flex items-center gap-2 mb-3 text-purple-400">
+                                            <FileText size={18} />
+                                            <span className="font-bold text-lg">Labor Ejecutada</span>
+                                        </div>
+
+                                        <div className="space-y-2 text-sm text-white/80">
+                                            <p className="font-bold text-white">{exec.programaciones?.labores?.nombre}</p>
+                                            <p className="text-xs text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
+
+                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                                                <Tractor size={14} />
+                                                <span>{exec.maquinaria?.nombre}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Clock size={14} />
+                                                <span>{new Date(exec.fin).toLocaleDateString()}</span>
+                                                <span className="text-white/40">({exec.horas_reales} hrs)</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                                <CheckCircle size={12} />
+                                                <span>Firmado el {new Date(exec.fecha_firma_tecnico).toLocaleDateString()}</span>
+                                            </div>
+
+                                            <div className="flex gap-2 mt-4">
+                                                <a
+                                                    href={exec.recibo_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-white/10 relative z-10"
+                                                >
+                                                    {exec.recibo_url?.includes('fake-receipt') ? 'Recibo (Prueba)' : 'Ver Recibo'}
+                                                </a>
+                                                <a
+                                                    href={exec.firma_tecnico_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-gray-500/30 relative z-10"
+                                                >
+                                                    Ver Firma
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </GlassCard>
+                                ))}
+                            </div>
+                        )
+                    )}
+                </>
+            )}
+
+            {/* Signature Modal */}
+            {showSignModal && selectedExecution && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+                        <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-white">Firmar Documento</h3>
+                            <button onClick={() => setShowSignModal(false)} className="text-white/60 hover:text-white">
+                                <LogOut size={20} className="rotate-180" /> {/* Using logout icon rotated as close or just X */}
+                            </button>
+                        </div>
+
+                        <div className="p-6 space-y-4">
+                            <p className="text-sm text-white/60">
+                                Yo, <span className="text-white font-bold">{profile?.nombre}</span>, certifico que he revisado y apruebo la labor realizada en la suerte <span className="text-white font-bold">{selectedExecution.programaciones.suertes.codigo}</span>.
+                            </p>
+
+                            <div className="border-2 border-dashed border-white/20 rounded-xl bg-white/5 relative h-48 touch-none">
+                                <SignatureCanvas
+                                    ref={sigCanvas}
+                                    penColor="white"
+                                    canvasProps={{ className: 'signature-canvas w-full h-full' }}
+                                    backgroundColor="rgba(255,255,255,0.05)"
+                                />
+                                <div className="absolute bottom-2 right-2 text-xs text-white/30 pointer-events-none">
+                                    Firme aquí
                                 </div>
                             </div>
-                        </GlassCard>
-                    ))}
+
+                            <div className="flex justify-between">
+                                <button onClick={clearSignature} className="text-xs text-red-400 hover:text-red-300 underline">
+                                    Borrar Firma
+                                </button>
+                                <a href={selectedExecution.recibo_url} target="_blank" className="text-xs text-blue-400 hover:text-blue-300 underline">
+                                    Ver Documento Original
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowSignModal(false)}
+                                className="px-4 py-2 rounded-lg text-white/60 hover:bg-white/10 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveSignature}
+                                className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-bold shadow-lg shadow-emerald-500/20 transition-all hover:scale-105"
+                            >
+                                Confirmar Firma
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 

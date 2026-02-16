@@ -43,5 +43,15 @@ This skill ensures all database interactions and schema changes in Supabase adhe
     *   Wrap complex changes in transactions (`BEGIN; ... COMMIT;`).
     *   Ensure idempotent scripts (use `IF NOT EXISTS`, `DROP ... IF EXISTS` carefully).
 
+7.  **Complex Permissions (RPCs):**
+    *   If RLS is too restrictive for a specific valid workflow (e.g., Cross-Role updates like Technician signing an Operator's execution), **DO NOT** loosen the table RLS.
+    *   Instead, create a `SECURITY DEFINER` function (RPC) that:
+        1.  Verifies permissions internally (e.g., `IF auth.uid() = ...`).
+        2.  Performs the update with elevated privileges.
+        3.  Is called from the frontend via `supabase.rpc()`.
+
 ## Scripts & Tools
 - No specific external scripts. Use `execute_sql` or `diff` tools to apply and verify migrations.
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**

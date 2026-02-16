@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-import { Check, X, Tractor, MapPin, Clock, Calendar, AlertCircle, Hammer } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Check, X, Tractor, MapPin, Clock, Calendar, AlertCircle, Hammer, FileText, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
@@ -8,6 +8,7 @@ import { GlassToast } from '../components/ui/GlassToast';
 
 export default function ZoneManagerDashboard() {
     const { profile } = useAuth();
+    const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const approvalId = searchParams.get('id');
     const statusFilter = searchParams.get('status') || 'PENDIENTE_APROBACION';
@@ -50,11 +51,14 @@ export default function ZoneManagerDashboard() {
     const fetchZoneRequests = async () => {
         try {
             setLoading(true);
-            // 1. Fetch suertes in my zone
-            const { data: suertesData } = await supabase
-                .from('suertes')
-                .select('id')
-                .eq('zona', profile?.zona); // Strict Zone Filter
+            // 1. Fetch suertes (filter by zone ONLY if user has a specific zone)
+            let suertesQuery = supabase.from('suertes').select('id');
+
+            if (profile?.zona) {
+                suertesQuery = suertesQuery.eq('zona', profile.zona);
+            }
+
+            const { data: suertesData } = await suertesQuery;
 
             if (!suertesData || suertesData.length === 0) {
                 setRequests([]);
@@ -68,12 +72,13 @@ export default function ZoneManagerDashboard() {
                 .from('programaciones')
                 .select(`
                   *,
-                  suertes (codigo, hacienda, zona),
+                  suertes (codigo, hacienda, zona, area_neta),
                   labores (nombre),
                   actividades (nombre),
                   prioridades (asunto, nivel),
                   usuarios (nombre),
-                  maquinaria (id, nombre, tarifa_hora)
+                  maquinaria (id, nombre, tarifa_hora),
+                  ejecuciones (id, recibo_url, firma_tecnico_url)
                 `)
                 .in('suerte_id', suerteIds)
                 .eq('estado', statusFilter) // Filter by status
@@ -117,6 +122,7 @@ export default function ZoneManagerDashboard() {
         switch (status) {
             case 'PENDIENTE_APROBACION': return 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10';
             case 'APROBADO_ZONA': return 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10';
+            case 'FINALIZADO': return 'text-blue-400 border-blue-400/30 bg-blue-400/10';
             case 'RECHAZADO': return 'text-red-400 border-red-400/30 bg-red-400/10';
             default: return 'text-gray-400';
         }
@@ -164,6 +170,33 @@ export default function ZoneManagerDashboard() {
                     <p className="text-2xl font-bold text-white">{requests.length}</p>
                 </div>
             </header>
+
+            {/* Status Filters */}
+            <div className="flex flex-wrap gap-2 mb-6">
+                {[
+                    { id: 'PENDIENTE_APROBACION', label: 'Pendientes', icon: Clock },
+                    { id: 'APROBADO_ZONA', label: 'Aprobados', icon: Check },
+                    { id: 'RECHAZADO', label: 'Rechazados', icon: X },
+                    { id: 'FINALIZADO', label: 'Finalizados', icon: CheckCircle }
+                ].map((status) => (
+                    <button
+                        key={status.id}
+                        onClick={() => {
+                            // Update URL to reflect status change
+                            const newParams = new URLSearchParams(searchParams);
+                            newParams.set('status', status.id);
+                            navigate(`?${newParams.toString()}`);
+                        }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${statusFilter === status.id
+                            ? 'bg-purple-500 text-white shadow-lg shadow-purple-900/20'
+                            : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                            }`}
+                    >
+                        <status.icon size={16} />
+                        {status.label}
+                    </button>
+                ))}
+            </div>
 
             {toast && (
                 <GlassToast
@@ -246,6 +279,29 @@ export default function ZoneManagerDashboard() {
                                                         <p className="text-white/40 text-xs ml-6">
                                                             {req.actividades?.nombre}
                                                         </p>
+
+                                                        {/* Cost Display */}
+                                                        <div className="flex items-center gap-2 mt-2 ml-6 flex-wrap">
+                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono">
+                                                                <span className="text-white/40 mr-1">Total:</span>
+                                                                {formatCurrency((req.horas_estimadas || 0) * (req.maquinaria?.tarifa_hora || 0))}
+                                                            </div>
+                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono">
+                                                                <span className="text-white/40 mr-1">$/Ha:</span>
+                                                                {formatCurrency(
+                                                                    ((req.horas_estimadas || 0) * (req.maquinaria?.tarifa_hora || 0)) /
+                                                                    (req.suertes?.area_neta || 1)
+                                                                )}
+                                                            </div>
+                                                            <div className={`
+                                                                px-2 py-1 rounded text-xs font-mono border
+                                                                ${req.prioridades?.nivel >= 8 ? 'text-red-400 border-red-400/30 bg-red-400/10' :
+                                                                    req.prioridades?.nivel >= 5 ? 'text-amber-400 border-amber-400/30 bg-amber-400/10' :
+                                                                        'text-emerald-400 border-emerald-400/30 bg-emerald-400/10'}
+                                                            `}>
+                                                                Prioridad: {req.prioridades?.asunto || 'Normal'}
+                                                            </div>
+                                                        </div>
                                                     </div>
 
                                                     {/* Info Técnico y Prioridad */}
@@ -261,14 +317,6 @@ export default function ZoneManagerDashboard() {
                                                             {new Date(req.created_at).toLocaleDateString()}
                                                             <Clock size={12} className="ml-2" />
                                                             {req.horas_estimadas}h est.
-                                                        </div>
-                                                        <div className={`
-                                                            inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold mt-1 ml-1 border
-                                                            ${req.prioridades?.nivel >= 8 ? 'text-red-400 border-red-400/30 bg-red-400/10' :
-                                                                req.prioridades?.nivel >= 5 ? 'text-amber-400 border-amber-400/30 bg-amber-400/10' :
-                                                                    'text-emerald-400 border-emerald-400/30 bg-emerald-400/10'}
-                                                        `}>
-                                                            Prioridad: {req.prioridades?.asunto || 'Normal'}
                                                         </div>
                                                     </div>
 
@@ -303,6 +351,17 @@ export default function ZoneManagerDashboard() {
                                                                 <span className="text-[10px] font-bold">APROBADO</span>
                                                             </div>
                                                         )}
+                                                        {req.estado === 'FINALIZADO' && req.ejecuciones?.[0]?.recibo_url && (
+                                                            <a
+                                                                href={req.ejecuciones[0].recibo_url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-500 hover:text-black transition-colors"
+                                                            >
+                                                                <FileText size={14} />
+                                                                Ver Recibo
+                                                            </a>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </GlassCard>
@@ -311,9 +370,10 @@ export default function ZoneManagerDashboard() {
                                 })}
                             </div>
                         </div>
-                    ))}
-                </div>
+                    ))
+                    }
+                </div >
             )}
-        </div>
+        </div >
     );
 }

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, DollarSign, Layers } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -62,7 +62,50 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Navigation */}
                 <nav className="flex-1 space-y-2">
-                    {/* Enlaces para TÉCNICOS */}
+                    {/* Vista Unificada para ANALISTAS (Admin) */}
+                    {role === 'analista' && (
+                        <>
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Vista Administrator</div>
+                            <NavLink to="/dashboard" className={linkClass} onClick={() => onClose()}>
+                                <LayoutDashboard size={20} />
+                                <span>Resumen Global</span>
+                            </NavLink>
+                            <NavLink to="/solicitudes/nueva" className={linkClass} onClick={() => onClose()}>
+                                <PlusCircle size={20} />
+                                <span>Nueva Solicitud</span>
+                            </NavLink>
+                            <NavLink to="/solicitudes" className={linkClass} onClick={() => onClose()}>
+                                <FileText size={20} />
+                                <span>Historial</span>
+                            </NavLink>
+                            <NavLink to="/aprobaciones" end className={linkClass} onClick={() => onClose()}>
+                                <Clock size={20} />
+                                <span>Por Aprobar</span>
+                            </NavLink>
+                            <NavLink to="/aprobaciones?status=RECHAZADO" className={linkClass} onClick={() => onClose()}>
+                                <X size={20} />
+                                <span>Rechazadas</span>
+                            </NavLink>
+                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                                <Layers size={20} />
+                                <span>Roturación</span>
+                            </NavLink>
+                            <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
+                                <Kanban size={20} />
+                                <span>Programación</span>
+                            </NavLink>
+                            <NavLink to="/costos" className={linkClass} onClick={() => onClose()}>
+                                <DollarSign size={20} />
+                                <span>Control de Costos</span>
+                            </NavLink>
+                            <NavLink to="/operador" className={linkClass} onClick={() => onClose()}>
+                                <Tractor size={20} />
+                                <span>Vista Operador</span>
+                            </NavLink>
+                        </>
+                    )}
+
+                    {/* Enlaces Exclusivos TÉCNICOS */}
                     {role === 'tecnico' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Menú Técnico</div>
@@ -78,10 +121,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <FileText size={20} />
                                 <span>Historial</span>
                             </NavLink>
+                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                                <Layers size={20} />
+                                <span>Roturación</span>
+                            </NavLink>
                         </>
                     )}
 
-                    {/* Enlaces para JEFES DE ZONA */}
+                    {/* Enlaces Exclusivos JEFES DE ZONA */}
                     {role === 'jefe_zona' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Gestión Zona</div>
@@ -101,21 +148,27 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <X size={20} />
                                 <span>Rechazadas</span>
                             </NavLink>
-                        </>
-                    )}
-
-                    {/* Enlaces para ANALISTAS */}
-                    {role === 'analista' && (
-                        <>
-                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Gestión</div>
-                            <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
-                                <Kanban size={20} />
-                                <span>Programación</span>
+                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                                <Layers size={20} />
+                                <span>Roturación</span>
                             </NavLink>
                         </>
                     )}
 
-                    {/* Enlaces para OPERADORES */}
+                    {/* Enlaces Exclusivos AUXILIAR */}
+                    {role === 'auxiliar' && (
+                        <>
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Auxiliar Campo</div>
+                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                                <Layers size={20} />
+                                <span>Roturación</span>
+                            </NavLink>
+                        </>
+                    )}
+
+                    {/* Enlaces Exclusivos ANALISTAS - REMOVED (Merged above) */}
+
+                    {/* Enlaces Exclusivos OPERADORES */}
                     {role === 'operador' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Mi Turno</div>

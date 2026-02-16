@@ -82,3 +82,6 @@ Before outputting code, ask yourself:
 4.  "Are the cards using `backdrop-blur-xl`?"
 
 If the answer to any is NO, you are breaking the design system. **FIX IT.**
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**

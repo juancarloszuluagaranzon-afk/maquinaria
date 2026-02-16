@@ -1,0 +1,1 @@
+ALTER TABLE public.programaciones ADD COLUMN IF NOT EXISTS fecha_programada DATE DEFAULT CURRENT_DATE;

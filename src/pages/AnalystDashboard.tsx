@@ -3,33 +3,13 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { GlassSelect } from '../components/ui/GlassSelect';
-import { GlassButton } from '../components/ui/GlassButton';
 import { GlassToast } from '../components/ui/GlassToast';
-import { MapPin, Tractor, Calendar, User, Save, ExternalLink, MessageCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Tractor, Calendar, User, MessageCircle, AlertCircle } from 'lucide-react';
 
-interface Request {
-    id: string;
-    suerte_id: string;
-    labor_id: string;
-    actividad_id: string;
-    prioridad_id: string;
-    estado: string;
-    created_at: string;
-    horas_estimadas: number;
-    contratista_id?: string;
-    maquinaria_id?: string;
-    suertes: { codigo: string; hacienda: string };
-    labores: { nombre: string };
-    actividades: { nombre: string };
-    prioridades: { nivel: number; asunto: string };
-    usuarios: { nombre: string }; // Técnico solic
-}
-
-interface Contractor { id: string; nombre: string; }
-interface Machinery { id: string; nombre: string; contratista_id?: string; }
+// ... interfaces ...
 
 export default function AnalystDashboard() {
-    const { user } = useAuth();
+    const { } = useAuth();
     const [requests, setRequests] = useState<Request[]>([]);
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [machinery, setMachinery] = useState<Machinery[]>([]);
@@ -51,7 +31,7 @@ export default function AnalystDashboard() {
                     .from('programaciones')
                     .select(`
                         *,
-                        suertes (codigo, hacienda),
+                        suertes (codigo, hacienda, area_neta),
                         labores (nombre),
                         actividades (nombre),
                         prioridades (nivel, asunto),
@@ -152,13 +132,7 @@ export default function AnalystDashboard() {
         }
     };
 
-    // Filter machinery based on selected contractor (if needed, currently showing all for flexibility but good UX would filter)
-    const getFilteredMachinery = (contractorId?: string) => {
-        if (!contractorId) return [];
-        // Assuming machinery has contratista_id, if not, show all. 
-        // Based on previous schema check, machinery DID have contratista_id FK.
-        return machinery.filter(m => m.contratista_id === contractorId);
-    };
+    // Filter machinery logic removed as unused for now
 
     if (loading) return <div className="p-8 text-center text-white">Cargando tablero...</div>;
 
@@ -215,6 +189,29 @@ export default function AnalystDashboard() {
                                             <span className="font-mono bg-white/10 px-2 rounded">Est: {req.horas_estimadas}h</span>
                                         </div>
                                     </div>
+
+                                    {/* Costos Dinámicos */}
+                                    {assign.machineryId && (() => {
+                                        const selectedMachine = machinery.find(m => m.id === assign.machineryId);
+                                        const rate = selectedMachine?.tarifa_hora || 0;
+                                        if (rate === 0) return null;
+
+                                        const total = req.horas_estimadas * rate;
+                                        const perHa = total / (req.suertes.area_neta || 1);
+
+                                        return (
+                                            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                                                <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono">
+                                                    <span className="text-white/40 mr-1">Total:</span>
+                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(total)}
+                                                </div>
+                                                <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono">
+                                                    <span className="text-white/40 mr-1">$/Ha:</span>
+                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(perHa)}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Assignment Section */}

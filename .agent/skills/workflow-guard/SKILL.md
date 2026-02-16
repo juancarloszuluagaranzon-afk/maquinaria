@@ -33,8 +33,13 @@ This skill acts as the guardian of business logic, specifically preventing "spag
     | `PENDIENTE` | `APROBADO` | **Jefe Zona** |
     | `APROBADO` | `PROGRAMADO` | **Analista** |
     | `PROGRAMADO` | `EN_EJECUCION` | **Operador** |
+    | `EN_EJECUCION` | `FINALIZADO` | **Operador** |
+    | `FINALIZADO` | `FIRMADO` | **Técnico** (via Signature) |
 
     *   Any transition outside this matrix is forbidden unless explicitly authorized by an admin override.
 
 ## Scripts & Tools
 - No specific scripts. Use `supabase-architect` skill to write the resulting SQL.
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**

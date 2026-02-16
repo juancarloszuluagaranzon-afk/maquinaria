@@ -44,3 +44,6 @@ This skill handles the complex ETL (Extract, Transform, Load) process required t
 
 ## Scripts & Tools
 - Use `python` or `node` scripts if CSV parsing is too complex for direct LLM processing, but prefer generating the SQL directly if the dataset is small (<50 rows).
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**

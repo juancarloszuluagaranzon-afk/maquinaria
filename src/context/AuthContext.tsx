@@ -2,10 +2,22 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
+// Extend User type to include our custom profile fields
+interface UserProfile {
+    id: string;
+    nombre: string;
+    email: string;
+    rol: 'admin' | 'jefe_zona' | 'tecnico' | 'analista' | 'operador' | 'contratista' | 'auxiliar';
+    zona: number | null;
+    hacienda_asignada?: string[];
+    empresa?: string;
+    contratista_id?: string; // For legacy contractor linking
+}
+
 interface AuthContextType {
     session: Session | null;
-    user: User | null;
-    profile: any | null;
+    user: (User & Partial<UserProfile>) | null; // Merge Supabase User with our Profile
+    profile: UserProfile | null;
     role: string | null;
     loading: boolean;
     signOut: () => Promise<void>;
