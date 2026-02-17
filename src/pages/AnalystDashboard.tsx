@@ -6,11 +6,36 @@ import { GlassSelect } from '../components/ui/GlassSelect';
 import { GlassToast } from '../components/ui/GlassToast';
 import { MapPin, Tractor, Calendar, User, MessageCircle, AlertCircle } from 'lucide-react';
 
-// ... interfaces ...
+interface Contractor {
+    id: string;
+    nombre: string;
+    telefono?: string;
+}
+
+interface Machinery {
+    id: string;
+    nombre: string;
+    contratista_id?: string;
+    tarifa_hora?: number;
+}
+
+interface ProgramacionRequest {
+    id: string;
+    estado: string;
+    created_at: string;
+    horas_estimadas: number;
+    contratista_id?: string;
+    maquinaria_id?: string;
+    suertes: { codigo: string; hacienda: string; area_neta: number };
+    labores: { nombre: string };
+    actividades: { nombre: string };
+    prioridades: { nivel: string; asunto: string };
+    usuarios: { nombre: string };
+}
 
 export default function AnalystDashboard() {
     const { } = useAuth();
-    const [requests, setRequests] = useState<Request[]>([]);
+    const [requests, setRequests] = useState<ProgramacionRequest[]>([]);
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [machinery, setMachinery] = useState<Machinery[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,7 +106,7 @@ export default function AnalystDashboard() {
         }));
     };
 
-    const saveAssignment = async (req: Request) => {
+    const saveAssignment = async (req: ProgramacionRequest) => {
         const assignment = assignments[req.id];
         if (!assignment?.contractorId || !assignment?.machineryId) {
             setToast({ message: 'Seleccione contratista y maquinaria', type: 'error' });

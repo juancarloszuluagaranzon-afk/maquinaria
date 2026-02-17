@@ -27,7 +27,7 @@ BEGIN
   -- Jhon Erik Sanmiguel Rangel
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jesanmiguel@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jesanmiguel@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
   
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'jesanmiguel@agricolas.co'), 'email', now(), now(), now());
@@ -38,7 +38,7 @@ BEGIN
   -- Luis Enrique Millan Castillo
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'lemillan@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'lemillan@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
   
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'lemillan@agricolas.co'), 'email', now(), now(), now());
@@ -49,7 +49,7 @@ BEGIN
   -- Manuel Fernando Primero Barragan
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'mprimero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'mprimero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'mprimero@agricolas.co'), 'email', now(), now(), now());
@@ -60,7 +60,7 @@ BEGIN
   -- Jorge Armando Quintero Carvajal
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jaquintero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jaquintero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'jaquintero@agricolas.co'), 'email', now(), now(), now());
@@ -71,7 +71,7 @@ BEGIN
   -- Alejandro Marmolejo Corrales
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'amarmolejo@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'amarmolejo@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'amarmolejo@agricolas.co'), 'email', now(), now(), now());
@@ -87,7 +87,7 @@ BEGIN
   -- Fredy Reyes Garcia
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'freyes@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'freyes@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'freyes@agricolas.co'), 'email', now(), now(), now());
@@ -98,7 +98,7 @@ BEGIN
   -- Alberto Vasquez Arce
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'avasquez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'avasquez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'avasquez@agricolas.co'), 'email', now(), now(), now());
@@ -109,7 +109,7 @@ BEGIN
   -- Hector Fabio Lopez Osorio
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'hflopez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'hflopez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'hflopez@agricolas.co'), 'email', now(), now(), now());
@@ -120,7 +120,7 @@ BEGIN
   -- Andres Felipe Messa Valderrama
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'afmessa@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'afmessa@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'afmessa@agricolas.co'), 'email', now(), now(), now());
@@ -131,7 +131,7 @@ BEGIN
   -- Juan Sebastian Rodriguez Alvear
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jsrodriguez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jsrodriguez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'jsrodriguez@agricolas.co'), 'email', now(), now(), now());
@@ -147,7 +147,7 @@ BEGIN
   -- Walter Hernando Bermudez Vargas (Zona 2)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'wbermudez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'wbermudez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'wbermudez@agricolas.co'), 'email', now(), now(), now());
@@ -158,7 +158,7 @@ BEGIN
   -- Leonardo Andres Lopez Trujillo (Zona TODAS -> NULL)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'llopez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'llopez@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'llopez@agricolas.co'), 'email', now(), now(), now());
@@ -174,7 +174,7 @@ BEGIN
   -- Maria Camila Valencia Quintero (Analista)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'mcvalencia@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'mcvalencia@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'mcvalencia@agricolas.co'), 'email', now(), now(), now());
@@ -185,7 +185,7 @@ BEGIN
   -- Ivan Dario Garcia Alarcon (Administrador -> Admin)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'idgarcia@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'idgarcia@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'idgarcia@agricolas.co'), 'email', now(), now(), now());
@@ -196,7 +196,7 @@ BEGIN
   -- Juan Carlos Zuluaga Ranzon (Analista)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jczuluaga@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'jczuluaga@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'jczuluaga@agricolas.co'), 'email', now(), now(), now());
@@ -207,7 +207,7 @@ BEGIN
   -- Wilmer Francisco Cutiva Delgado (Auxiliar)
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'wfcutiva@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'wfcutiva@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'wfcutiva@agricolas.co'), 'email', now(), now(), now());
@@ -223,7 +223,7 @@ BEGIN
   -- A TODA MAQUINA S.A.S
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'atodamaquina@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'atodamaquina@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'atodamaquina@agricolas.co'), 'email', now(), now(), now());
@@ -234,7 +234,7 @@ BEGIN
   -- AGROVASCAS S A S
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'agrovascas@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'agrovascas@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'agrovascas@agricolas.co'), 'email', now(), now(), now());
@@ -245,7 +245,7 @@ BEGIN
   -- SERVICIOS AGROMECANICOS DE OCCIDENTE
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'agromecanicos@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'agromecanicos@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'agromecanicos@agricolas.co'), 'email', now(), now(), now());
@@ -256,7 +256,7 @@ BEGIN
   -- SERVICIOS AGRICOLAS VARGAS S.A.S
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'serviciosvargas@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'serviciosvargas@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'serviciosvargas@agricolas.co'), 'email', now(), now(), now());
@@ -267,7 +267,7 @@ BEGIN
   -- CAMARO LABORES AGRICOLAS S.A.S.
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'camaro@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'camaro@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'camaro@agricolas.co'), 'email', now(), now(), now());
@@ -278,7 +278,7 @@ BEGIN
   -- AGROINDUSTRIAL Y DE SERVICIOS MORALES
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'serviciosmorales@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'serviciosmorales@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'serviciosmorales@agricolas.co'), 'email', now(), now(), now());
@@ -289,7 +289,7 @@ BEGIN
   -- ANDRUSV S A S
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'andrusv@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'andrusv@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'andrusv@agricolas.co'), 'email', now(), now(), now());
@@ -300,7 +300,7 @@ BEGIN
   -- AGROMAQUINARIA GALVIL S.A.S
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'galvil@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'galvil@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'galvil@agricolas.co'), 'email', now(), now(), now());
@@ -311,7 +311,7 @@ BEGIN
   -- LABORES AGRICOLAS ROMERO S.A.S.
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'laboresromero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'laboresromero@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'laboresromero@agricolas.co'), 'email', now(), now(), now());
@@ -322,7 +322,7 @@ BEGIN
   -- RIOPAILA CASTILLA S.A
   new_id := gen_random_uuid();
   INSERT INTO auth.users (instance_id, id, email, encrypted_password, email_confirmed_at, role, aud, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
-  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'riopaila@agricolas.co', crypt('Riopaila2026*', gen_salt('bf')), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
+  VALUES ('00000000-0000-0000-0000-000000000000', new_id, 'riopaila@agricolas.co', crypt('Riopaila2026*', gen_salt('bf', 10)), now(), 'authenticated', 'authenticated', '{"provider":"email","providers":["email"]}', '{}', now(), now());
 
   INSERT INTO auth.identities (id, user_id, provider_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   VALUES (gen_random_uuid(), new_id, new_id::text, jsonb_build_object('sub', new_id, 'email', 'riopaila@agricolas.co'), 'email', now(), now(), now());
@@ -331,3 +331,16 @@ BEGIN
   VALUES (new_id, 'RIOPAILA CASTILLA S.A', 'riopaila@agricolas.co', 'operador', 'RIOPAILA CASTILLA S.A');
 
 END $$;
+
+-- 4. FIX NULL TOKEN COLUMNS (GoTrue requires empty strings, not NULL)
+UPDATE auth.users
+SET
+  confirmation_token = COALESCE(confirmation_token, ''),
+  recovery_token = COALESCE(recovery_token, ''),
+  email_change_token_new = COALESCE(email_change_token_new, ''),
+  email_change = COALESCE(email_change, ''),
+  email_change_token_current = COALESCE(email_change_token_current, ''),
+  phone_change = COALESCE(phone_change, ''),
+  phone_change_token = COALESCE(phone_change_token, ''),
+  reauthentication_token = COALESCE(reauthentication_token, '')
+WHERE email LIKE '%@agricolas.co';

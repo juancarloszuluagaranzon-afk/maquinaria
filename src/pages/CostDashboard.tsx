@@ -163,8 +163,8 @@ export default function CostDashboard() {
             if (profile?.rol === 'jefe_zona') {
                 // Zone Managers should ideally see only their zone. 
             } else if (profile?.rol === 'tecnico') {
-                if (profile.haciendas && Array.isArray(profile.haciendas)) {
-                    filtered = filtered.filter(r => profile.haciendas.includes(r.hacienda));
+                if (profile.hacienda_asignada && Array.isArray(profile.hacienda_asignada)) {
+                    filtered = filtered.filter(r => profile.hacienda_asignada!.includes(r.hacienda));
                 }
             } else if (profile?.rol === 'operador') {
                 if (profile.contratista_id) {
