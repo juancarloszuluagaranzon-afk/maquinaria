@@ -28,15 +28,20 @@ This skill handles the complex ETL (Extract, Transform, Load) process required t
     Scan the CSV for unique names in responsible columns and generate SQL to insert them into `usuarios` (or `auth.users` mock):
     *   `TECNICO AGRICOLA RESPONSABLE` -> create user with role `tecnico`.
     *   `RESPONSABLE ZONA` -> create user with role `jefe_zona`.
-    *   **Default Password:** Use `'Riopaila2026'` for all generated users.
+    *   **Default Password:** Use `'Riopaila2026*'` for all generated users. Hash with `crypt('Riopaila2026*', gen_salt('bf', 10))`.
+    *   **Auth Pattern:** For each user, insert into `auth.users`, `auth.identities`, AND `public.usuarios`. Always fix NULL tokens (see `supabase-architect` skill).
 
-3.  **Fixed Catalogs:**
+3.  **Fixed Catalogs (Updated Feb 2026):**
     *   **Contractors & Machinery:** Use the following specific data for seeding:
-        *   **Serviexcavaciones**: Motoniveladora (155,000), Retro 130 (185,200), Enllantada (119,400).
-        *   **Serviretro**: Enllantada (119,400), Retro X8 (137,100).
-        *   **Castor Amigo**: Retro Dossan (206,200).
-        *   **Riopaila Castilla**: Retro 320 (233,356).
+        *   **Serviexcavaciones** (`serviexcavaciones@agricolas.co`): Motoniveladora (155,000), Retro 130 (185,200), Enllantada (119,400).
+        *   **Serviretro** (`serviretro@agricolas.co`): Enllantada (119,400), Retro X8 (137,100).
+        *   **Castor Amigo** (`castoramigo@agricolas.co`): Retro Dossan (206,200).
+        *   **Riopaila Castilla** (`riopaila@agricolas.co`): Retro 320 (233,356).
+        *   **ANDRUSV S A S** (`andrusv@agricolas.co`)
+        *   **AGROMAQUINARIA GALVIL S.A.S** (`galvil@agricolas.co`)
+        *   **LABORES AGRICOLAS ROMERO S.A.S.** (`laboresromero@agricolas.co`)
         *   **Labores (Tasks):** Generate generic SQL inserts if not provided (e.g., Preparation, Planting, Harvest).
+    *   **Operator usuarios pattern:** Use `empresa` column (not `zona`/`hacienda_asignada`) for operator role.
 
 4.  **Output Format:**
     *   Generate a single, transactional SQL file (checking for duplicates).

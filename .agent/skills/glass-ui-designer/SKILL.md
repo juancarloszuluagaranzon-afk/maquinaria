@@ -68,11 +68,25 @@ For dashboards, forms, and cards:
 - **Muted**: `text-white/40`
 - **Accents**: `text-purple-400` or `text-blue-400`
 
+### 7. Field Readability (Card Content) — MANDATORY MINIMUMS
+This app is used by **field workers on mobile devices**. Small text is unacceptable.
+
+| Element | Minimum Class | Pixels |
+|---------|--------------|--------|
+| Card titles / codes | `text-xl` | 20px |
+| Card body text | `text-base` | 16px |
+| Status badges / tags | `text-sm` | 14px |
+| Timestamps / micro-labels | `text-sm` | 14px |
+| Action buttons text | `text-sm` | 14px |
+
+**NEVER** use `text-xs` (12px) or `text-[10px]` inside cards. Those sizes are only acceptable for non-essential decorative elements.
+
 ## Strict Anti-Regression Rules
 1.  **NEVER** use plain `bg-slate-900` without the gradient.
 2.  **NEVER** forget the ambient light blobs (`fixed inset-0`).
 3.  **NEVER** use opaque backgrounds (e.g., `bg-white`, `bg-gray-800`). ALWAYS use `bg-white/5` or `bg-white/10` with `backdrop-blur`.
 4.  **NEVER** remove the `border-white/10`. It is crucial for the "Glass" effect.
+5.  **NEVER** use `text-xs` or smaller inside dashboard cards. Field workers can't read it.
 
 ## How to Check Your Work
 Before outputting code, ask yourself:

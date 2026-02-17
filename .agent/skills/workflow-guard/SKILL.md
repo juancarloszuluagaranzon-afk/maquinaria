@@ -30,13 +30,15 @@ This skill acts as the guardian of business logic, specifically preventing "spag
 
     | From State | To State | Required Role |
     | :--- | :--- | :--- |
-    | `PENDIENTE` | `APROBADO` | **Jefe Zona** |
-    | `APROBADO` | `PROGRAMADO` | **Analista** |
-    | `PROGRAMADO` | `EN_EJECUCION` | **Operador** |
-    | `EN_EJECUCION` | `FINALIZADO` | **Operador** |
-    | `FINALIZADO` | `FIRMADO` | **Técnico** (via Signature) |
+    | `PENDIENTE` | `APROBADO_ZONA` | **jefe_zona** |
+    | `PENDIENTE` | `RECHAZADO` | **jefe_zona** |
+    | `APROBADO_ZONA` | `ASIGNADO` | **analista** (assigns contractor + machine) |
+    | `ASIGNADO` | `EN_EJECUCION` | **operador** |
+    | `EN_EJECUCION` | `FINALIZADO` | **operador** |
+    | `FINALIZADO` | `FIRMADO` | **tecnico** (via digital signature) |
 
     *   Any transition outside this matrix is forbidden unless explicitly authorized by an admin override.
+    *   The `ASIGNADO` state is set when the analyst assigns a `contratista_id` and `maquinaria_id`.
 
 ## Scripts & Tools
 - No specific scripts. Use `supabase-architect` skill to write the resulting SQL.

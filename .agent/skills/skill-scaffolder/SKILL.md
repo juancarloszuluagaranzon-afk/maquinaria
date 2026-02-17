@@ -57,11 +57,11 @@ description: {{third_person_description_of_what_the_skill_does}}
 
 ## Scripts & Tools
 - If you need to run complex logic, use the scripts in the `scripts/` folder.
-60. - Always run scripts with `--help` first to understand their arguments.
-61. 
-62. ## Language
-63. **LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**
-64. ```
-65. 
-66. ## Language
-67. **LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**
+- Always run scripts with `--help` first to understand their arguments.
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**
+```
+
+## Language
+**LANGUAGE: SPANISH. All output, comments, and documentation MUST be in Spanish.**
