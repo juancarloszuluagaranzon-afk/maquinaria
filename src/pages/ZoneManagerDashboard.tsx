@@ -258,35 +258,35 @@ export default function ZoneManagerDashboard() {
                                                     {/* Info Principal */}
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <div className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(req.estado)}`}>
+                                                            <div className={`px-2 py-0.5 rounded text-xs font-bold border ${getStatusColor(req.estado)}`}>
                                                                 {req.estado.replace('_', ' ')}
                                                             </div>
                                                             {/* Global Order Display Only */}
-                                                            <span className="text-xs text-white/40 font-mono">Orden General: #{req.orden_ejecucion || '-'}</span>
+                                                            <span className="text-sm text-white/40 font-mono">Orden General: #{req.orden_ejecucion || '-'}</span>
                                                             {isHighlighted && (
-                                                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-black text-[10px] font-bold animate-pulse">
+                                                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500 text-black text-xs font-bold animate-pulse">
                                                                     <AlertCircle size={10} /> SOLICITUD ACTUAL
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                                                        <h3 className="font-bold text-white text-xl flex items-center gap-2">
                                                             <MapPin size={16} className="text-emerald-400" />
-                                                            {req.suertes?.codigo} <span className="text-white/40 text-sm font-normal">({req.suertes?.hacienda})</span>
+                                                            {req.suertes?.codigo} <span className="text-white/40 text-base font-normal">({req.suertes?.hacienda})</span>
                                                         </h3>
-                                                        <p className="text-brand-liquid-light text-sm mt-1 flex items-center gap-2">
+                                                        <p className="text-brand-liquid-light text-base mt-1 flex items-center gap-2">
                                                             <Hammer size={14} /> {req.labores?.nombre}
                                                         </p>
-                                                        <p className="text-white/40 text-xs ml-6">
+                                                        <p className="text-white/40 text-sm ml-6">
                                                             {req.actividades?.nombre}
                                                         </p>
 
                                                         {/* Cost Display */}
                                                         <div className="flex items-center gap-2 mt-2 ml-6 flex-wrap">
-                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono">
+                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-sm text-emerald-400 font-mono">
                                                                 <span className="text-white/40 mr-1">Total:</span>
                                                                 {formatCurrency((req.horas_estimadas || 0) * (req.maquinaria?.tarifa_hora || 0))}
                                                             </div>
-                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono">
+                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-sm text-blue-400 font-mono">
                                                                 <span className="text-white/40 mr-1">$/Ha:</span>
                                                                 {formatCurrency(
                                                                     ((req.horas_estimadas || 0) * (req.maquinaria?.tarifa_hora || 0)) /
@@ -294,7 +294,7 @@ export default function ZoneManagerDashboard() {
                                                                 )}
                                                             </div>
                                                             <div className={`
-                                                                px-2 py-1 rounded text-xs font-mono border
+                                                                px-2 py-1 rounded text-sm font-mono border
                                                                 ${req.prioridades?.nivel >= 8 ? 'text-red-400 border-red-400/30 bg-red-400/10' :
                                                                     req.prioridades?.nivel >= 5 ? 'text-amber-400 border-amber-400/30 bg-amber-400/10' :
                                                                         'text-emerald-400 border-emerald-400/30 bg-emerald-400/10'}
@@ -306,13 +306,13 @@ export default function ZoneManagerDashboard() {
 
                                                     {/* Info Técnico y Prioridad */}
                                                     <div className="space-y-1">
-                                                        <div className="flex items-center gap-2 text-sm text-white/70">
+                                                        <div className="flex items-center gap-2 text-base text-white/70">
                                                             <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-[10px] font-bold text-black">
                                                                 {req.usuarios?.nombre?.charAt(0) || 'T'}
                                                             </div>
                                                             {req.usuarios?.nombre || 'Técnico'}
                                                         </div>
-                                                        <div className="flex items-center gap-2 text-xs text-white/40 ml-1">
+                                                        <div className="flex items-center gap-2 text-sm text-white/40 ml-1">
                                                             <Calendar size={12} />
                                                             {new Date(req.created_at).toLocaleDateString()}
                                                             <Clock size={12} className="ml-2" />
@@ -348,7 +348,7 @@ export default function ZoneManagerDashboard() {
                                                         {req.estado === 'APROBADO_ZONA' && (
                                                             <div className="flex flex-col items-center text-emerald-400">
                                                                 <Check size={24} />
-                                                                <span className="text-[10px] font-bold">APROBADO</span>
+                                                                <span className="text-xs font-bold">APROBADO</span>
                                                             </div>
                                                         )}
                                                         {req.estado === 'FINALIZADO' && req.ejecuciones?.[0]?.recibo_url && (
@@ -356,7 +356,7 @@ export default function ZoneManagerDashboard() {
                                                                 href={req.ejecuciones[0].recibo_url}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="flex items-center gap-1 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-500 hover:text-black transition-colors"
+                                                                className="flex items-center gap-1 bg-blue-500/20 text-blue-400 px-3 py-1.5 rounded-lg text-sm font-bold hover:bg-blue-500 hover:text-black transition-colors"
                                                             >
                                                                 <FileText size={14} />
                                                                 Ver Recibo

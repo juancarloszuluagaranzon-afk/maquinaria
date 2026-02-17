@@ -252,51 +252,51 @@ export default function TechnicianDashboard() {
                                 {requests.map((req) => (
                                     <GlassCard key={req.id} className="relative group hover:border-white/30 transition-all">
                                         {/* Badge de Estado */}
-                                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(req.estado)}`}>
+                                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border ${getStatusColor(req.estado)}`}>
                                             {req.estado.replace('_', ' ')}
                                         </div>
 
                                         {/* Título: Suerte */}
                                         <div className="flex items-center gap-2 mb-3 text-emerald-400">
                                             <MapPin size={18} />
-                                            <span className="font-bold text-lg">{req.suertes?.codigo}</span>
-                                            <span className="text-xs text-white/50 ml-1">({req.suertes?.hacienda})</span>
+                                            <span className="font-bold text-xl">{req.suertes?.codigo}</span>
+                                            <span className="text-sm text-white/50 ml-1">({req.suertes?.hacienda})</span>
                                         </div>
 
                                         {/* Detalles */}
-                                        <div className="space-y-2 text-sm text-white/80">
+                                        <div className="space-y-2 text-base text-white/80">
                                             <div className="flex items-center gap-2">
                                                 <Tractor size={16} className="text-blue-400" />
                                                 <span>{req.labores?.nombre}</span>
                                             </div>
-                                            <div className="pl-6 text-white/50 text-xs">
+                                            <div className="pl-6 text-white/50 text-sm">
                                                 ↳ {req.actividades?.nombre}
                                             </div>
 
                                             {/* Footer con Fecha, Costos y Prioridad */}
                                             <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
-                                                <div className="flex items-center gap-2 text-white/30 text-xs">
-                                                    <Clock size={12} />
+                                                <div className="flex items-center gap-2 text-white/30 text-sm">
+                                                    <Clock size={14} />
                                                     {new Date(req.created_at).toLocaleDateString()}
                                                 </div>
 
                                                 <div className="flex items-center justify-between gap-2 flex-wrap">
                                                     {req.maquinaria?.tarifa_hora ? (
                                                         <div className="flex gap-2">
-                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono whitespace-nowrap">
+                                                            <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-sm text-emerald-400 font-mono whitespace-nowrap">
                                                                 <span className="text-white/40 mr-1">Total:</span>
                                                                 {formatCurrency(req.horas_estimadas * req.maquinaria.tarifa_hora)}
                                                             </div>
-                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono whitespace-nowrap">
+                                                            <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-sm text-blue-400 font-mono whitespace-nowrap">
                                                                 <span className="text-white/40 mr-1">$/Ha:</span>
                                                                 {formatCurrency((req.horas_estimadas * req.maquinaria.tarifa_hora) / (req.suertes?.area_neta || 1))}
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs text-white/20 italic">Sin tarifa definida</div>
+                                                        <div className="text-sm text-white/20 italic">Sin tarifa definida</div>
                                                     )}
 
-                                                    <div className={`px-2 py-1 rounded text-xs font-mono border whitespace-nowrap ${req.prioridades?.nivel <= 3 ? "text-red-400 border-red-400/30 bg-red-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
+                                                    <div className={`px-2 py-1 rounded text-sm font-mono border whitespace-nowrap ${req.prioridades?.nivel <= 3 ? "text-red-400 border-red-400/30 bg-red-400/10" : "text-yellow-400 border-yellow-400/30 bg-yellow-400/10"}`}>
                                                         {req.prioridades?.asunto || 'Normal'}
                                                     </div>
                                                 </div>
@@ -319,18 +319,18 @@ export default function TechnicianDashboard() {
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {executions.map((exec) => (
                                     <GlassCard key={exec.id} className="relative group hover:border-blue-400/30 transition-all">
-                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border border-blue-400/30 bg-blue-400/10 text-blue-400">
+                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border border-blue-400/30 bg-blue-400/10 text-blue-400">
                                             PENDIENTE FIRMA
                                         </div>
 
                                         <div className="flex items-center gap-2 mb-3 text-blue-400">
                                             <FileText size={18} />
-                                            <span className="font-bold text-lg">Reporte de Labor</span>
+                                            <span className="font-bold text-xl">Reporte de Labor</span>
                                         </div>
 
-                                        <div className="space-y-2 text-sm text-white/80">
+                                        <div className="space-y-2 text-base text-white/80">
                                             <p className="font-bold text-white">{exec.programaciones?.labores?.nombre}</p>
-                                            <p className="text-xs text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
+                                            <p className="text-sm text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
 
                                             <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
                                                 <Tractor size={14} />
@@ -347,13 +347,13 @@ export default function TechnicianDashboard() {
                                                     href={exec.recibo_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-white/10 relative z-10"
+                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-sm font-bold transition-colors border border-white/10 relative z-10"
                                                 >
                                                     Ver Recibo
                                                 </a>
                                                 <button
                                                     onClick={() => handleOpenSignModal(exec)}
-                                                    className="flex-1 bg-blue-500 hover:bg-blue-400 text-black text-center py-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1 relative z-10"
+                                                    className="flex-1 bg-blue-500 hover:bg-blue-400 text-black text-center py-2 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1 relative z-10"
                                                 >
                                                     <PenTool size={14} />
                                                     Firmar
@@ -376,18 +376,18 @@ export default function TechnicianDashboard() {
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {signedExecutions.map((exec) => (
                                     <GlassCard key={exec.id} className="relative group hover:border-purple-400/30 transition-all bg-purple-500/5">
-                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold border border-purple-400/30 bg-purple-400/10 text-purple-400 flex items-center gap-1">
+                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border border-purple-400/30 bg-purple-400/10 text-purple-400 flex items-center gap-1">
                                             <CheckCircle size={12} /> FIRMADO
                                         </div>
 
                                         <div className="flex items-center gap-2 mb-3 text-purple-400">
                                             <FileText size={18} />
-                                            <span className="font-bold text-lg">Labor Ejecutada</span>
+                                            <span className="font-bold text-xl">Labor Ejecutada</span>
                                         </div>
 
-                                        <div className="space-y-2 text-sm text-white/80">
+                                        <div className="space-y-2 text-base text-white/80">
                                             <p className="font-bold text-white">{exec.programaciones?.labores?.nombre}</p>
-                                            <p className="text-xs text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
+                                            <p className="text-sm text-white/50">{exec.programaciones?.suertes?.codigo} - {exec.programaciones?.suertes?.hacienda}</p>
 
                                             <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
                                                 <Tractor size={14} />
@@ -398,7 +398,7 @@ export default function TechnicianDashboard() {
                                                 <span>{new Date(exec.fin).toLocaleDateString()}</span>
                                                 <span className="text-white/40">({exec.horas_reales} hrs)</span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs text-emerald-400">
+                                            <div className="flex items-center gap-2 text-sm text-emerald-400">
                                                 <CheckCircle size={12} />
                                                 <span>Firmado el {new Date(exec.fecha_firma_tecnico).toLocaleDateString()}</span>
                                             </div>
@@ -408,7 +408,7 @@ export default function TechnicianDashboard() {
                                                     href={exec.recibo_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-white/10 relative z-10"
+                                                    className="flex-1 bg-white/5 hover:bg-white/10 text-center py-2 rounded-lg text-sm font-bold transition-colors border border-white/10 relative z-10"
                                                 >
                                                     {exec.recibo_url?.includes('fake-receipt') ? 'Recibo (Prueba)' : 'Ver Recibo'}
                                                 </a>
@@ -416,7 +416,7 @@ export default function TechnicianDashboard() {
                                                     href={exec.firma_tecnico_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 text-center py-2 rounded-lg text-xs font-bold transition-colors border border-gray-500/30 relative z-10"
+                                                    className="flex-1 bg-gray-500/20 hover:bg-gray-500/30 text-gray-300 text-center py-2 rounded-lg text-sm font-bold transition-colors border border-gray-500/30 relative z-10"
                                                 >
                                                     Ver Firma
                                                 </a>

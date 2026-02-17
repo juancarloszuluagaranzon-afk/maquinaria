@@ -161,18 +161,18 @@ export default function AnalystDashboard() {
                                         <div>
                                             <div className="flex items-center gap-2 text-emerald-400 mb-1">
                                                 <MapPin size={18} />
-                                                <span className="font-bold text-lg">{req.suertes.codigo}</span>
+                                                <span className="font-bold text-xl">{req.suertes.codigo}</span>
                                                 <span className="text-white/60">({req.suertes.hacienda})</span>
                                             </div>
                                             <h3 className="text-xl font-medium text-white">{req.labores.nombre}</h3>
                                             <p className="text-white/70">{req.actividades.nombre}</p>
                                         </div>
-                                        <div className={`px-3 py-1 rounded-full text-xs font-bold border ${req.estado === 'ASIGNADO' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'}`}>
+                                        <div className={`px-3 py-1 rounded-full text-sm font-bold border ${req.estado === 'ASIGNADO' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'}`}>
                                             {req.estado}
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 text-sm text-white/60">
+                                    <div className="grid grid-cols-2 gap-4 text-base text-white/60">
                                         <div className="flex items-center gap-2">
                                             <User size={14} />
                                             <span>Solicita: {req.usuarios?.nombre}</span>
@@ -201,11 +201,11 @@ export default function AnalystDashboard() {
 
                                         return (
                                             <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                                                <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-xs text-emerald-400 font-mono">
+                                                <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-sm text-emerald-400 font-mono">
                                                     <span className="text-white/40 mr-1">Total:</span>
                                                     {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(total)}
                                                 </div>
-                                                <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-xs text-blue-400 font-mono">
+                                                <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-sm text-blue-400 font-mono">
                                                     <span className="text-white/40 mr-1">$/Ha:</span>
                                                     {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(perHa)}
                                                 </div>
@@ -216,7 +216,7 @@ export default function AnalystDashboard() {
 
                                 {/* Assignment Section */}
                                 <div className="w-full lg:w-1/3 space-y-4 bg-white/5 p-4 rounded-xl border border-white/5">
-                                    <h4 className="text-sm font-semibold text-white/80 mb-2 flex items-center gap-2">
+                                    <h4 className="text-base font-semibold text-white/80 mb-2 flex items-center gap-2">
                                         <Tractor size={16} /> Asignación de Recursos
                                     </h4>
 
