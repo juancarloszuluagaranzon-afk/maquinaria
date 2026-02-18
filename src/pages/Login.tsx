@@ -17,13 +17,20 @@ export default function Login() {
         setLoading(true);
         setError(null);
 
-        const { error } = await supabase.auth.signInWithPassword({
+        // DEBUG TEMPORAL - borrar después
+        console.log('🔑 Supabase URL:', import.meta.env.VITE_SUPABASE_URL);
+        console.log('🔑 Anon Key (primeros 20 chars):', import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 20));
+
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
+        console.log('🔑 Auth response data:', data?.user?.email, '| error:', error?.message);
 
         if (error) {
-            setError('Credenciales inválidas. Intenta de nuevo.');
+            console.error("Login error:", error);
+            // Mostrar el error real para depuración
+            setError(error.message || 'Error desconocido');
             setLoading(false);
         } else {
             // AuthContext will pick up the session change and correct routing will happen in App.tsx
