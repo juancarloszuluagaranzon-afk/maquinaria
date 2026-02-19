@@ -135,7 +135,7 @@ export function TechnicalRequestForm() {
             const { data, error } = await supabase
                 .from('programaciones')
                 .insert({
-                    tecnico_id: user?.id,
+                    usuario_responsable_id: user?.id,
                     suerte_id: selectedSuerte.id,
                     labor_id: selectedLabor,
                     actividad_id: selectedActividad,
@@ -145,7 +145,7 @@ export function TechnicalRequestForm() {
                     observaciones: observaciones,
                     estado: 'PENDIENTE_APROBACION',
                     fecha_programada: new Date().toISOString().split('T')[0],
-                    created_at: new Date().toISOString()
+                    // created_at is default now()
                 })
                 .select();
 

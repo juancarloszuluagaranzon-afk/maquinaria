@@ -3,8 +3,7 @@ import { supabase } from '../lib/supabase';
 import RoturacionRow, { RoturacionData } from '../components/roturacion/RoturacionRow';
 import EditStatusModal from '../components/roturacion/EditStatusModal';
 import RoturacionImporter from '../components/roturacion/RoturacionImporter';
-import SuertesImporter from '../components/roturacion/SuertesImporter';
-import { Filter, RefreshCw, Search, Calculator, Upload, Database, FileSpreadsheet } from 'lucide-react';
+import { Filter, RefreshCw, Search, Calculator, Upload } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
@@ -16,7 +15,6 @@ export default function RoturacionDashboard() {
     const [searchTerm, setSearchTerm] = useState('');
     const [editingItem, setEditingItem] = useState<RoturacionData | null>(null);
     const [showImporter, setShowImporter] = useState(false);
-    const [showSuertesImporter, setShowSuertesImporter] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -60,16 +58,28 @@ export default function RoturacionDashboard() {
         }
     };
 
-    const filteredData = data.filter(item => {
+    const [viewMode, setViewMode] = useState<'PENDING' | 'FINISHED'>('PENDING');
+
+    const basicFilteredData = data.filter(item => {
         const matchesZone = selectedZone === 'ALL' || item.zona === selectedZone;
         const matchesSearch = item.suerte_codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.hacienda?.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesZone && matchesSearch;
     });
 
-    // Calculate totals for summary cards
-    const totalArea = filteredData.reduce((sum, item) => sum + (Number(item.area_neta) || 0), 0);
-    const pendingCount = filteredData.filter(i => i.estado_1ra_labor === 'PENDIENTE' || i.estado_2da_labor === 'PENDIENTE').length;
+    const filteredData = basicFilteredData.filter(item => {
+        const isFinished = item.estado_1ra_labor === 'TERMINADO' &&
+            item.estado_2da_labor === 'TERMINADO' &&
+            item.estado_fertilizacion === 'TERMINADO';
+
+        return viewMode === 'FINISHED' ? isFinished : !isFinished;
+    });
+
+    // Calculate totals for summary cards based on ALL data, not just filtered view
+    const totalArea = basicFilteredData.reduce((sum, item) => sum + (Number(item.area_neta) || 0), 0);
+    const pendingCount = basicFilteredData.filter(i =>
+        i.estado_1ra_labor === 'PENDIENTE' || i.estado_2da_labor === 'PENDIENTE' || i.estado_fertilizacion === 'PENDIENTE'
+    ).length;
 
     return (
         <div className="p-6 max-w-[1600px] mx-auto space-y-6">
@@ -105,80 +115,65 @@ export default function RoturacionDashboard() {
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-wrap gap-4 bg-white/5 p-4 rounded-2xl border border-white/10 items-center">
-                <div className="flex items-center gap-2 bg-black/20 px-3 py-2 rounded-lg border border-white/5 w-full md:w-64">
-                    <Search size={18} className="text-white/30" />
-                    <input
-                        type="text"
-                        placeholder="Buscar suerte..."
-                        className="bg-transparent border-none focus:outline-none text-white w-full"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
+            {/* Filters & Tabs */}
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
 
-                <div className="flex items-center gap-2">
-                    <Filter size={18} className="text-white/30" />
-                    <select
-                        value={selectedZone}
-                        onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-                        className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                {/* View Tabs */}
+                <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+                    <button
+                        onClick={() => setViewMode('PENDING')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'PENDING'
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-white/50 hover:text-white hover:bg-white/5'
+                            }`}
                     >
-                        <option value="ALL">Todas las Zonas</option>
-                        <option value={1}>Zona 1</option>
-                        <option value={2}>Zona 2</option>
-                        <option value={3}>Zona 3</option>
-                    </select>
+                        Pendientes
+                    </button>
+                    <button
+                        onClick={() => setViewMode('FINISHED')}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'FINISHED'
+                            ? 'bg-blue-500 text-white shadow-lg'
+                            : 'text-white/50 hover:text-white hover:bg-white/5'
+                            }`}
+                    >
+                        Terminadas
+                    </button>
                 </div>
 
-                <div className="flex gap-2">
-                    {profile?.rol === 'analista' && (
-                        <>
-                            <button
-                                onClick={() => setShowSuertesImporter(true)}
-                                className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 px-4 py-2 rounded-lg border border-blue-500/30 transition-all font-medium"
-                            >
-                                <Database size={18} />
-                                <span className="hidden sm:inline">Actualizar Maestro</span>
-                            </button>
-                            <button
-                                onClick={() => setShowImporter(true)}
-                                className="flex items-center gap-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 px-4 py-2 rounded-lg border border-emerald-500/30 transition-all font-medium"
-                            >
-                                <FileSpreadsheet size={18} />
-                                <span className="hidden sm:inline">Importar Excel</span>
-                            </button>
-                        </>
-                    )}
+                <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex items-center gap-2 bg-black/20 px-3 py-2 rounded-lg border border-white/5 w-full md:w-64">
+                        <Search size={18} className="text-white/30" />
+                        <input
+                            type="text"
+                            placeholder="Buscar suerte..."
+                            className="bg-transparent border-none focus:outline-none text-white w-full"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Filter size={18} className="text-white/30" />
+                        <select
+                            value={selectedZone}
+                            onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                        >
+                            <option value="ALL">Todas las Zonas</option>
+                            <option value={1}>Zona 1</option>
+                            <option value={2}>Zona 2</option>
+                            <option value={3}>Zona 3</option>
+                        </select>
+                    </div>
+
                     <button
                         onClick={fetchData}
-                        className="ml-auto p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors"
+                        className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors"
                     >
                         <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </div>
-
-            {/* Importers */}
-            {showImporter && (
-                <RoturacionImporter
-                    onClose={() => setShowImporter(false)}
-                    onImportSuccess={() => {
-                        fetchData();
-                    }}
-                />
-            )}
-
-            {showSuertesImporter && (
-                <SuertesImporter
-                    onClose={() => setShowSuertesImporter(false)}
-                    onImportSuccess={() => {
-                        fetchData();
-                        toast.success('Maestro actualizado. Datos refrescados.');
-                    }}
-                />
-            )}
 
             {/* Table */}
             <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-xl">
@@ -208,7 +203,7 @@ export default function RoturacionDashboard() {
                             ) : filteredData.length === 0 ? (
                                 <tr>
                                     <td colSpan={10} className="p-8 text-center text-white/30">
-                                        No se encontraron registros.
+                                        No se encontraron registros en esta sección.
                                     </td>
                                 </tr>
                             ) : (

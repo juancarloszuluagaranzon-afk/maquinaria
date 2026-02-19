@@ -14,6 +14,9 @@ export type RoturacionData = {
     estado_1ra_labor: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
     estado_2da_labor: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
     estado_fertilizacion: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
+    area_avance_1ra?: number;
+    area_avance_2da?: number;
+    area_avance_fertilizacion?: number;
     observacion?: string;
 };
 
@@ -41,6 +44,9 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                 estado_1ra_labor: data.estado_1ra_labor,
                 estado_2da_labor: data.estado_2da_labor,
                 estado_fertilizacion: data.estado_fertilizacion,
+                area_avance_1ra: data.area_avance_1ra || 0,
+                area_avance_2da: data.area_avance_2da || 0,
+                area_avance_fertilizacion: data.area_avance_fertilizacion || 0,
                 observacion: data.observacion || ''
             });
         }
@@ -81,7 +87,12 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
 
                     {/* 1ra Labor */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-white/70 uppercase tracking-widest">1ra Labor (Roturación)</label>
+                        <div className="flex justify-between items-center px-1">
+                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">1ra Labor (Roturación)</label>
+                            <span className="text-[10px] text-emerald-400 font-mono">
+                                Pendiente: {(data.area_neta - (formData.area_avance_1ra || 0)).toFixed(2)} ha
+                            </span>
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {statusOptions.map(opt => (
                                 <button
@@ -100,11 +111,31 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                                 </button>
                             ))}
                         </div>
+                        {formData.estado_1ra_labor === 'PARCIAL' && (
+                            <div className="animate-in fade-in slide-in-from-top-2">
+                                <label className="text-[10px] text-yellow-400/70 ml-1">Área Realizada (ha)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={data.area_neta}
+                                    value={formData.area_avance_1ra || ''}
+                                    onChange={(e) => setFormData(p => ({ ...p, area_avance_1ra: parseFloat(e.target.value) || 0 }))}
+                                    className="w-full mt-1 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2 text-yellow-200 text-sm focus:outline-none focus:border-yellow-400"
+                                    placeholder={`Máx: ${data.area_neta} ha`}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* 2da Labor */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-white/70 uppercase tracking-widest">2da Labor (Roturación)</label>
+                        <div className="flex justify-between items-center px-1">
+                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">2da Labor (Roturación)</label>
+                            <span className="text-[10px] text-emerald-400 font-mono">
+                                Pendiente: {(data.area_neta - (formData.area_avance_2da || 0)).toFixed(2)} ha
+                            </span>
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {statusOptions.map(opt => (
                                 <button
@@ -123,11 +154,31 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                                 </button>
                             ))}
                         </div>
+                        {formData.estado_2da_labor === 'PARCIAL' && (
+                            <div className="animate-in fade-in slide-in-from-top-2">
+                                <label className="text-[10px] text-yellow-400/70 ml-1">Área Realizada (ha)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={data.area_neta}
+                                    value={formData.area_avance_2da || ''}
+                                    onChange={(e) => setFormData(p => ({ ...p, area_avance_2da: parseFloat(e.target.value) || 0 }))}
+                                    className="w-full mt-1 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2 text-yellow-200 text-sm focus:outline-none focus:border-yellow-400"
+                                    placeholder={`Máx: ${data.area_neta} ha`}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Fertilización */}
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-white/70 uppercase tracking-widest">Fertilización</label>
+                        <div className="flex justify-between items-center px-1">
+                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">Fertilización</label>
+                            <span className="text-[10px] text-emerald-400 font-mono">
+                                Pendiente: {(data.area_neta - (formData.area_avance_fertilizacion || 0)).toFixed(2)} ha
+                            </span>
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             {statusOptions.map(opt => (
                                 <button
@@ -146,6 +197,21 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                                 </button>
                             ))}
                         </div>
+                        {formData.estado_fertilizacion === 'PARCIAL' && (
+                            <div className="animate-in fade-in slide-in-from-top-2">
+                                <label className="text-[10px] text-yellow-400/70 ml-1">Área Realizada (ha)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max={data.area_neta}
+                                    value={formData.area_avance_fertilizacion || ''}
+                                    onChange={(e) => setFormData(p => ({ ...p, area_avance_fertilizacion: parseFloat(e.target.value) || 0 }))}
+                                    className="w-full mt-1 bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2 text-yellow-200 text-sm focus:outline-none focus:border-yellow-400"
+                                    placeholder={`Máx: ${data.area_neta} ha`}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Observaciones */}
