@@ -60,7 +60,7 @@ export default function AnalystDashboard() {
                         labores (nombre),
                         actividades (nombre),
                         prioridades (nivel, asunto),
-                        usuarios (nombre)
+                        usuarios:usuarios!tecnico_id (nombre)
                     `)
                     .or('estado.eq.APROBADO_ZONA,estado.eq.ASIGNADO') // Show approved and already assigned
                     .order('created_at', { ascending: false }),
