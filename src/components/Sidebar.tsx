@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers, Database } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -62,6 +62,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Navigation */}
                 <nav className="flex-1 space-y-2">
+                    {/* Enlacen Común: Maestro */}
+                    <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3 mt-4">
+                        General
+                    </div>
+                    <a
+                        href="https://juancarloszuluagaranzon-afk.github.io/maestro-riopaila/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium text-white/60 hover:bg-white/5 hover:text-white"
+                        onClick={() => onClose()}
+                    >
+                        <Database size={20} />
+                        <span>Maestro</span>
+                    </a>
+
                     {/* Vista Unificada para ANALISTAS */}
                     {role === 'analista' && (
                         <>
