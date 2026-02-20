@@ -76,7 +76,7 @@ export default function ZoneManagerDashboard() {
                   labores (nombre),
                   actividades (nombre),
                   prioridades (asunto, nivel),
-                  usuarios (nombre),
+                  usuarios!programaciones_tecnico_id_fkey (nombre),
                   maquinaria (id, nombre, tarifa_hora),
                   ejecuciones (id, recibo_url, firma_tecnico_url)
                 `)

@@ -11,9 +11,9 @@ export type RoturacionData = {
     dias_edad: number;
     tipo_roturacion: string;
     tipo_cana: string; // SOCA, PLANTILLA
-    estado_1ra_labor: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
-    estado_2da_labor: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
-    estado_fertilizacion: 'PENDIENTE' | 'PROGRAMADO' | 'PARCIAL' | 'TERMINADO';
+    estado_1ra_labor: 'PENDIENTE' | 'PROGRAMADO' | 'EN_EJECUCION' | 'PARCIAL' | 'TERMINADO';
+    estado_2da_labor: 'PENDIENTE' | 'PROGRAMADO' | 'EN_EJECUCION' | 'PARCIAL' | 'TERMINADO';
+    estado_fertilizacion: 'PENDIENTE' | 'PROGRAMADO' | 'EN_EJECUCION' | 'PARCIAL' | 'TERMINADO';
     area_avance_1ra?: number;
     area_avance_2da?: number;
     area_avance_fertilizacion?: number;
@@ -30,6 +30,7 @@ interface EditStatusModalProps {
 const statusOptions = [
     { value: 'PENDIENTE', label: 'Pendiente', color: 'text-red-400' },
     { value: 'PROGRAMADO', label: 'Programado', color: 'text-blue-400' },
+    { value: 'EN_EJECUCION', label: 'En Ejecución', color: 'text-purple-400' },
     { value: 'PARCIAL', label: 'Parcial', color: 'text-yellow-400' },
     { value: 'TERMINADO', label: 'Terminado', color: 'text-emerald-400' },
 ];

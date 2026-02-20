@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Plus, Tractor, Clock, MapPin, LogOut, CheckCircle, FileText, PenTool } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -10,16 +10,29 @@ import toast from 'react-hot-toast';
 export default function TechnicianDashboard() {
     const { user, profile, signOut } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const [requests, setRequests] = useState<any[]>([]);
     const [executions, setExecutions] = useState<any[]>([]);
     const [signedExecutions, setSignedExecutions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'solicitudes' | 'ejecuciones' | 'firmadas'>('solicitudes');
+
+    // Default tab from URL or 'solicitudes'
+    const [activeTab, setActiveTab] = useState<'solicitudes' | 'ejecuciones' | 'firmadas'>(
+        (searchParams.get('tab') as 'solicitudes' | 'ejecuciones' | 'firmadas') || 'solicitudes'
+    );
 
     // Signature Modal
     const [showSignModal, setShowSignModal] = useState(false);
     const [selectedExecution, setSelectedExecution] = useState<any>(null);
     const sigCanvas = useRef<SignatureCanvas>(null);
+
+    // Update activeTab if URL changes (optional but good for nav)
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['solicitudes', 'ejecuciones', 'firmadas'].includes(tab)) {
+            setActiveTab(tab as any);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -39,7 +52,8 @@ export default function TechnicianDashboard() {
     const fetchSignedExecutions = async () => {
         try {
             if (!user) return;
-            const { data, error } = await supabase
+
+            let query = supabase
                 .from('ejecuciones')
                 .select(`
                     *,
@@ -47,13 +61,21 @@ export default function TechnicianDashboard() {
                         tecnico_id,
                         suertes (codigo, hacienda),
                         labores (nombre),
-                        actividades (nombre)
+                        actividades (nombre),
+                        tecnico:usuarios!tecnico_id (nombre)
                     ),
-                    maquinaria (nombre)
+                    maquinaria (nombre, tarifa_hora)
                 `)
-                .eq('programaciones.tecnico_id', user.id)
                 .not('firma_tecnico_url', 'is', null) // Signed
                 .order('fin', { ascending: false });
+
+            // Only filter by user if NOT analyst or admin
+            const isAnalystOrAdmin = profile?.rol === 'analista' || profile?.rol === 'admin';
+            if (!isAnalystOrAdmin) {
+                query = query.eq('programaciones.tecnico_id', user.id);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setSignedExecutions(data || []);
@@ -401,6 +423,26 @@ export default function TechnicianDashboard() {
                                             <div className="flex items-center gap-2 text-sm text-emerald-400">
                                                 <CheckCircle size={12} />
                                                 <span>Firmado el {new Date(exec.fecha_firma_tecnico).toLocaleDateString()}</span>
+                                            </div>
+
+                                            {/* Detalles Adicionales */}
+                                            <div className="mt-3 pt-3 border-t border-white/10 text-sm space-y-1">
+                                                <div className="flex justify-between text-white/70">
+                                                    <span>Horómetros:</span>
+                                                    <span className="font-mono text-white">{exec.horometro_inicio || 0} - {exec.horometro_fin}</span>
+                                                </div>
+                                                <div className="flex justify-between text-white/70">
+                                                    <span>Costo Labor:</span>
+                                                    <span className="font-mono text-emerald-400">
+                                                        {exec.maquinaria?.tarifa_hora
+                                                            ? formatCurrency(exec.horas_reales * exec.maquinaria.tarifa_hora)
+                                                            : '$0'}
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between text-white/70">
+                                                    <span>Aprobado por:</span>
+                                                    <span className="text-white">{exec.programaciones?.tecnico?.nombre || 'Técnico'}</span>
+                                                </div>
                                             </div>
 
                                             <div className="flex gap-2 mt-4">

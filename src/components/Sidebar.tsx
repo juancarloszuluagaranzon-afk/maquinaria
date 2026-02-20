@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, DollarSign, Layers } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -62,46 +62,36 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {/* Navigation */}
                 <nav className="flex-1 space-y-2">
-                    {/* Vista Unificada para ANALISTAS (Admin) */}
+                    {/* Vista Unificada para ANALISTAS */}
                     {role === 'analista' && (
                         <>
-                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Vista Administrator</div>
-                            <NavLink to="/dashboard" className={linkClass} onClick={() => onClose()}>
-                                <LayoutDashboard size={20} />
-                                <span>Resumen Global</span>
+                            {/* GRUPO 1: Asignación de Maquinaria */}
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3 mt-4">
+                                Asignación de Maquinaria
+                            </div>
+                            <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
+                                <Kanban size={20} />
+                                <span>Programación</span>
                             </NavLink>
                             <NavLink to="/solicitudes/nueva" className={linkClass} onClick={() => onClose()}>
                                 <PlusCircle size={20} />
                                 <span>Nueva Solicitud</span>
                             </NavLink>
-                            <NavLink to="/solicitudes" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/solicitudes?tab=firmadas" className={linkClass} onClick={() => onClose()}>
                                 <FileText size={20} />
-                                <span>Historial</span>
+                                <span>Recibos Firmados</span>
                             </NavLink>
-                            <NavLink to="/aprobaciones" end className={linkClass} onClick={() => onClose()}>
-                                <Clock size={20} />
-                                <span>Por Aprobar</span>
-                            </NavLink>
-                            <NavLink to="/aprobaciones?status=RECHAZADO" className={linkClass} onClick={() => onClose()}>
-                                <X size={20} />
-                                <span>Rechazadas</span>
-                            </NavLink>
+
+                            {/* GRUPO 2: Roturación */}
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3 mt-6">
+                                Roturación
+                            </div>
                             <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
                                 <Layers size={20} />
-                                <span>Roturación</span>
+                                <span>Asignación</span>
                             </NavLink>
-                            <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
-                                <Kanban size={20} />
-                                <span>Programación</span>
-                            </NavLink>
-                            <NavLink to="/costos" className={linkClass} onClick={() => onClose()}>
-                                <DollarSign size={20} />
-                                <span>Control de Costos</span>
-                            </NavLink>
-                            <NavLink to="/operador" className={linkClass} onClick={() => onClose()}>
-                                <Tractor size={20} />
-                                <span>Vista Operador</span>
-                            </NavLink>
+
+                            {/* Temporarily hidden or removed as per request: Resumen Global, Control de Costos, Vista Operador */}
                         </>
                     )}
 

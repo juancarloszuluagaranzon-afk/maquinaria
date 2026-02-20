@@ -13,7 +13,9 @@ interface ReceiptProps {
         costoPorHa?: string;
         tarifaHora?: string;
         tipo: string;
+        horometroInicio: number;
         horometroFin: number;
+        aprobadoPor?: string;
     };
 }
 
@@ -65,6 +67,10 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                 <div className="py-2"></div>
 
                 <div className="flex justify-between py-1">
+                    <span className="font-semibold text-gray-600">Horómetro Inicio:</span>
+                    <span className="text-right font-medium">{data.horometroInicio}</span>
+                </div>
+                <div className="flex justify-between py-1">
                     <span className="font-semibold text-gray-600">Horómetro Fin:</span>
                     <span className="text-right font-medium">{data.horometroFin}</span>
                 </div>
@@ -77,8 +83,8 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                                 <span className="text-right font-medium text-gray-800">{data.tarifaHora}</span>
                             </div>
                         )}
-                        <div className="flex justify-between py-1">
-                            <span className="font-semibold text-gray-600">Costo Total:</span>
+                        <div className="flex justify-between py-1 bg-gray-50 px-2 rounded mt-1">
+                            <span className="font-bold text-gray-700">Costo Total:</span>
                             <span className="text-right font-bold text-gray-800">{data.costoTotal}</span>
                         </div>
                         {data.costoPorHa && (
@@ -87,6 +93,13 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                                 <span className="text-right font-bold text-blue-600">{data.costoPorHa}</span>
                             </div>
                         )}
+
+                        <div className="mt-6 border-t border-gray-300 pt-2">
+                            <p className="text-xs text-gray-500 mb-1">Aprobado por:</p>
+                            <p className="font-medium text-lg text-gray-800 border-b border-gray-300 pb-1">
+                                {data.aprobadoPor || '_______________________'}
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>

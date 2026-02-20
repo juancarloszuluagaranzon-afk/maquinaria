@@ -3,31 +3,59 @@ import { supabase } from '../lib/supabase';
 import RoturacionRow, { RoturacionData } from '../components/roturacion/RoturacionRow';
 import EditStatusModal from '../components/roturacion/EditStatusModal';
 import RoturacionImporter from '../components/roturacion/RoturacionImporter';
-import { Filter, RefreshCw, Search, Calculator, Upload } from 'lucide-react';
+import ProgrammingModal from '../components/roturacion/ProgrammingModal';
+import AssignmentModal from '../components/roturacion/AssignmentModal';
+import { Filter, RefreshCw, Search, Calculator, Upload, Calendar } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 export default function RoturacionDashboard() {
     const { profile } = useAuth();
+    const canAssign = profile?.rol === 'analista' || profile?.rol === 'auxiliar';
+    // Roles que ven múltiples zonas y necesitan el filtro de zona
+    const canSeeAllZones = ['analista', 'auxiliar', 'admin'].includes(profile?.rol || '');
     const [data, setData] = useState<RoturacionData[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedZone, setSelectedZone] = useState<number | 'ALL'>('ALL');
     const [searchTerm, setSearchTerm] = useState('');
     const [editingItem, setEditingItem] = useState<RoturacionData | null>(null);
     const [showImporter, setShowImporter] = useState(false);
+    const [showProgramming, setShowProgramming] = useState(false);
+    const [assignmentItem, setAssignmentItem] = useState<RoturacionData | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            // Fetch from the view we created
+            // Fetch directly from table + join to ensure we get new manual columns
+            // The view 'v_roturacion_dashboard' might be outdated since columns were added manually
             const { data: rows, error } = await supabase
-                .from('v_roturacion_dashboard')
-                .select('*')
-                .order('zona', { ascending: true })
-                .order('suerte_codigo', { ascending: true });
+                .from('roturacion_seguimiento')
+                .select(`
+                    *,
+                    suertes (
+                        codigo,
+                        hacienda,
+                        area_neta,
+                        zona
+                    )
+                `);
 
             if (error) throw error;
-            setData(rows || []);
+
+            // Transform data to flat structure expected by UI
+            const formattedData: RoturacionData[] = (rows || []).map((r: any) => ({
+                ...r,
+                suerte_codigo: r.suertes?.codigo,
+                hacienda: r.suertes?.hacienda,
+                area_neta: r.suertes?.area_neta,
+                zona: r.suertes?.zona
+            })).sort((a: any, b: any) => {
+                // Sort by Zona then Suerte
+                if (a.zona !== b.zona) return a.zona - b.zona;
+                return a.suerte_codigo?.localeCompare(b.suerte_codigo || '');
+            });
+
+            setData(formattedData);
         } catch (error) {
             console.error('Error fetching data:', error);
             toast.error('Error al cargar datos de roturación');
@@ -81,10 +109,33 @@ export default function RoturacionDashboard() {
         i.estado_1ra_labor === 'PENDIENTE' || i.estado_2da_labor === 'PENDIENTE' || i.estado_fertilizacion === 'PENDIENTE'
     ).length;
 
-    return (
-        <div className="p-6 max-w-[1600px] mx-auto space-y-6">
 
-            {/* Header & Stats */}
+    // Stats Calculation Logic
+    const calculateStats = () => {
+        const totalArea = filteredData.reduce((sum, row) => sum + (row.area_neta || 0), 0);
+
+        const finished1ra = filteredData.filter(r => r.estado_1ra_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+        const finished2da = filteredData.filter(r => r.estado_2da_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+        const finishedFer = filteredData.filter(r => r.estado_fertilizacion === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+
+        return {
+            total: totalArea,
+            finished: {
+                labor1: finished1ra,
+                labor2: finished2da,
+                laborFer: finishedFer
+            },
+            pending: {
+                labor1: totalArea - finished1ra,
+                labor2: totalArea - finished2da,
+                laborFer: totalArea - finishedFer
+            }
+        };
+    };
+
+    return (
+        <div className="p-6 md:p-10 space-y-8 min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
+            {/* Header */}
             <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
@@ -95,6 +146,14 @@ export default function RoturacionDashboard() {
                 </div>
 
                 <div className="flex gap-4">
+                    <button
+                        onClick={() => setShowProgramming(true)}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center gap-2 transition-colors font-medium shadow-lg shadow-blue-500/20"
+                    >
+                        <Calendar size={18} />
+                        Programar
+                    </button>
+
                     {profile?.rol === 'analista' && (
                         <button
                             onClick={() => setShowImporter(true)}
@@ -115,8 +174,63 @@ export default function RoturacionDashboard() {
                 </div>
             </div>
 
-            {/* Filters & Tabs */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/10">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Card 1: Área Total */}
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1">Área Total</h3>
+                    <div className="text-3xl font-bold text-white font-mono">
+                        {calculateStats().total.toFixed(2)} <span className="text-lg text-white/50">ha</span>
+                    </div>
+                    <div className="mt-2 text-xs text-white/40">
+                        Total de suertes filtradas
+                    </div>
+                </div>
+
+                {/* Card 2: Área Terminada por Labor */}
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Terminado por Labor</h3>
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">1ra Rot.</span>
+                            <span className="font-mono text-emerald-400">{calculateStats().finished.labor1.toFixed(1)} ha</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">2da Rot.</span>
+                            <span className="font-mono text-emerald-400">{calculateStats().finished.labor2.toFixed(1)} ha</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">Fertili.</span>
+                            <span className="font-mono text-emerald-400">{calculateStats().finished.laborFer.toFixed(1)} ha</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Card 3: Área Pendiente (Total - Terminada) */}
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Pendiente por Labor</h3>
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">1ra Rot.</span>
+                            <span className="font-mono text-yellow-400">{calculateStats().pending.labor1.toFixed(1)} ha</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">2da Rot.</span>
+                            <span className="font-mono text-yellow-400">{calculateStats().pending.labor2.toFixed(1)} ha</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-white/70">Fertili.</span>
+                            <span className="font-mono text-yellow-400">{calculateStats().pending.laborFer.toFixed(1)} ha</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Actions Bar */}
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-black/40 backdrop-blur-xl p-4 rounded-2xl border border-white/10 mb-6">
 
                 {/* View Tabs */}
                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
@@ -152,19 +266,21 @@ export default function RoturacionDashboard() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-white/30" />
-                        <select
-                            value={selectedZone}
-                            onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
-                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
-                        >
-                            <option value="ALL">Todas las Zonas</option>
-                            <option value={1}>Zona 1</option>
-                            <option value={2}>Zona 2</option>
-                            <option value={3}>Zona 3</option>
-                        </select>
-                    </div>
+                    {canSeeAllZones && (
+                        <div className="flex items-center gap-2">
+                            <Filter size={18} className="text-white/30" />
+                            <select
+                                value={selectedZone}
+                                onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                                className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                            >
+                                <option value="ALL">Todas las Zonas</option>
+                                <option value={1}>Zona 1</option>
+                                <option value={2}>Zona 2</option>
+                                <option value={3}>Zona 3</option>
+                            </select>
+                        </div>
+                    )}
 
                     <button
                         onClick={fetchData}
@@ -181,7 +297,7 @@ export default function RoturacionDashboard() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-white/5 border-b border-white/10 text-xs font-bold text-white/50 uppercase tracking-wider">
-                                <th className="p-4 text-center">Zona</th>
+                                <th className="p-4 text-center">{canSeeAllZones ? 'Zona' : ''}</th>
                                 <th className="p-4">Suerte</th>
                                 <th className="p-4 text-right">Área Total</th>
                                 <th className="p-4 hidden md:table-cell">Fecha Inicio</th>
@@ -191,6 +307,7 @@ export default function RoturacionDashboard() {
                                 <th className="p-4 text-center w-32">2da Labor</th>
                                 <th className="p-4 text-center w-32">Fertilización</th>
                                 <th className="p-4 hidden lg:table-cell text-right">Tipo Caña</th>
+                                {canAssign && <th className="p-4 text-center">Asignar</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -212,6 +329,9 @@ export default function RoturacionDashboard() {
                                         key={row.id}
                                         row={row}
                                         onEdit={setEditingItem}
+                                        onAssign={setAssignmentItem}
+                                        canAssign={canAssign}
+                                        showZone={canSeeAllZones}
                                     />
                                 ))
                             )}
@@ -238,6 +358,25 @@ export default function RoturacionDashboard() {
                     }}
                 />
             )}
+
+            <ProgrammingModal
+                isOpen={showProgramming}
+                onClose={() => setShowProgramming(false)}
+                onSuccess={() => {
+                    fetchData();
+                    setShowProgramming(false);
+                }}
+            />
+
+            <AssignmentModal
+                isOpen={!!assignmentItem}
+                onClose={() => setAssignmentItem(null)}
+                data={assignmentItem}
+                onSuccess={() => {
+                    fetchData();
+                    setAssignmentItem(null);
+                }}
+            />
         </div>
     );
 }

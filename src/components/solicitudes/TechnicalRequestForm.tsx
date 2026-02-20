@@ -135,7 +135,7 @@ export function TechnicalRequestForm() {
             const { data, error } = await supabase
                 .from('programaciones')
                 .insert({
-                    usuario_responsable_id: user?.id,
+                    tecnico_id: user?.id,
                     suerte_id: selectedSuerte.id,
                     labor_id: selectedLabor,
                     actividad_id: selectedActividad,
