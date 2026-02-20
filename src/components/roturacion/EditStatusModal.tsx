@@ -89,7 +89,7 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                     {/* 1ra Labor */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">1ra Labor (Roturación)</label>
+                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">1a Labor (Roturación)</label>
                             <span className="text-[10px] text-emerald-400 font-mono">
                                 Pendiente: {(data.area_neta - (formData.area_avance_1ra || 0)).toFixed(2)} ha
                             </span>
@@ -132,7 +132,7 @@ export default function EditStatusModal({ isOpen, onClose, data, onSave }: EditS
                     {/* 2da Labor */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center px-1">
-                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">2da Labor (Roturación)</label>
+                            <label className="text-xs font-bold text-white/70 uppercase tracking-widest">2a Labor (Roturación)</label>
                             <span className="text-[10px] text-emerald-400 font-mono">
                                 Pendiente: {(data.area_neta - (formData.area_avance_2da || 0)).toFixed(2)} ha
                             </span>

@@ -236,7 +236,7 @@ export default function ProgrammingModal({ isOpen, onClose, onSuccess }: Program
                             <div className="bg-white/5 rounded-xl p-5 border border-white/10">
                                 <h4 className="text-white font-bold mb-4 flex items-center gap-2">
                                     <span className="w-6 h-6 rounded-full bg-emerald-500 text-black flex items-center justify-center text-xs font-bold">1</span>
-                                    1ra Roturación
+                                    1a Roturación
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>
@@ -282,7 +282,7 @@ export default function ProgrammingModal({ isOpen, onClose, onSuccess }: Program
                             <div className="bg-white/5 rounded-xl p-5 border border-white/10 opacity-60 hover:opacity-100 transition-opacity">
                                 <h4 className="text-white/70 font-bold mb-4 flex items-center gap-2">
                                     <span className="w-6 h-6 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold">2</span>
-                                    2da Roturación (Opcional)
+                                    2a Roturación (Opcional)
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div>

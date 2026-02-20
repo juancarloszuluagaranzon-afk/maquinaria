@@ -81,8 +81,8 @@ interface ActiveRotExecution {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const laborLabel: Record<LaborKey, string> = {
-    '1RA': '1ª Roturación',
-    '2DA': '2ª Roturación',
+    '1RA': '1a Roturación',
+    '2DA': '2a Roturación',
     'FER': 'Fertilización',
 };
 

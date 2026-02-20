@@ -138,17 +138,17 @@ export default function RoturacionDashboard() {
             {/* Header */}
             <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
                         <Calculator className="text-emerald-400" />
                         Seguimiento de Roturación
                     </h1>
-                    <p className="text-white/50 mt-1">Gestión de labores en primeros 3 meses (Soca/Plantilla)</p>
+                    <p className="text-white/50 mt-1 text-sm md:text-base">Gestión de labores en primeros 3 meses (Soca/Plantilla)</p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4 w-full md:w-auto">
                     <button
                         onClick={() => setShowProgramming(true)}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center gap-2 transition-colors font-medium shadow-lg shadow-blue-500/20"
+                        className="flex-1 md:flex-none px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-blue-500/20"
                     >
                         <Calendar size={18} />
                         Programar
@@ -157,19 +157,19 @@ export default function RoturacionDashboard() {
                     {profile?.rol === 'analista' && (
                         <button
                             onClick={() => setShowImporter(true)}
-                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center gap-2 transition-colors font-medium shadow-lg shadow-emerald-500/20"
+                            className="flex-1 md:flex-none px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-emerald-500/20"
                         >
                             <Upload size={18} />
-                            Importar Excel
+                            Importar
                         </button>
                     )}
-                    <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-right">
-                        <div className="text-xs text-white/50 uppercase font-bold">Área Visible</div>
-                        <div className="text-xl font-mono text-emerald-400">{totalArea.toFixed(2)} ha</div>
+                    <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
+                        <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Área Visible</div>
+                        <div className="text-lg font-mono text-emerald-400">{totalArea.toFixed(2)}</div>
                     </div>
-                    <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-right">
-                        <div className="text-xs text-white/50 uppercase font-bold">Pendientes</div>
-                        <div className="text-xl font-mono text-yellow-400">{pendingCount}</div>
+                    <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
+                        <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Pendientes</div>
+                        <div className="text-lg font-mono text-yellow-400">{pendingCount}</div>
                     </div>
                 </div>
             </div>
@@ -194,15 +194,15 @@ export default function RoturacionDashboard() {
                     <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Terminado por Labor</h3>
                     <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">1ra Rot.</span>
+                            <span className="text-white/70">1a Roturacion</span>
                             <span className="font-mono text-emerald-400">{calculateStats().finished.labor1.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">2da Rot.</span>
+                            <span className="text-white/70">2a Roturacion</span>
                             <span className="font-mono text-emerald-400">{calculateStats().finished.labor2.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">Fertili.</span>
+                            <span className="text-white/70">Fertilizacion</span>
                             <span className="font-mono text-emerald-400">{calculateStats().finished.laborFer.toFixed(1)} ha</span>
                         </div>
                     </div>
@@ -214,15 +214,15 @@ export default function RoturacionDashboard() {
                     <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Pendiente por Labor</h3>
                     <div className="space-y-1">
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">1ra Rot.</span>
+                            <span className="text-white/70">1a Roturacion</span>
                             <span className="font-mono text-yellow-400">{calculateStats().pending.labor1.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">2da Rot.</span>
+                            <span className="text-white/70">2a Roturacion</span>
                             <span className="font-mono text-yellow-400">{calculateStats().pending.labor2.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                            <span className="text-white/70">Fertili.</span>
+                            <span className="text-white/70">Fertilizacion</span>
                             <span className="font-mono text-yellow-400">{calculateStats().pending.laborFer.toFixed(1)} ha</span>
                         </div>
                     </div>
@@ -303,8 +303,8 @@ export default function RoturacionDashboard() {
                                 <th className="p-4 hidden md:table-cell">Fecha Inicio</th>
                                 <th className="p-4 text-center">Días</th>
                                 <th className="p-4 hidden md:table-cell">Tipo Rot.</th>
-                                <th className="p-4 text-center w-32">1ra Labor</th>
-                                <th className="p-4 text-center w-32">2da Labor</th>
+                                <th className="p-4 text-center w-32">1a Labor</th>
+                                <th className="p-4 text-center w-32">2a Labor</th>
                                 <th className="p-4 text-center w-32">Fertilización</th>
                                 <th className="p-4 hidden lg:table-cell text-right">Tipo Caña</th>
                                 {canAssign && <th className="p-4 text-center">Asignar</th>}
