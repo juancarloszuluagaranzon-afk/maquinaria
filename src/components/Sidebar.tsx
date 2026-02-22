@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers, Database } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers, Database, Settings } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -9,13 +9,21 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     const { profile, signOut } = useAuth();
+    const location = useLocation();
     const role = profile?.rol;
 
-    const linkClass = ({ isActive }: { isActive: boolean }) =>
-        `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium ${isActive
+    const linkClass = (targetTo: string) => ({ isActive }: { isActive: boolean }) => {
+        // Precise matching for links with query parameters
+        const isQueryLink = targetTo.includes('?');
+        const isTrulyActive = isQueryLink
+            ? (location.pathname + location.search).includes(targetTo)
+            : isActive;
+
+        return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium ${isTrulyActive
             ? 'bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] border border-emerald-500/20'
             : 'text-white/60 hover:bg-white/5 hover:text-white'
-        }`;
+            }`;
+    };
 
     return (
         <>
@@ -76,6 +84,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Database size={20} />
                         <span>Maestro</span>
                     </a>
+                    <NavLink to="/settings" className={linkClass('/settings')} onClick={() => onClose()}>
+                        <Settings size={20} />
+                        <span>Configuración</span>
+                    </NavLink>
 
                     {/* Vista Unificada para ANALISTAS */}
                     {role === 'analista' && (
@@ -84,15 +96,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3 mt-4">
                                 Asignación de Maquinaria
                             </div>
-                            <NavLink to="/analista" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/analista" className={linkClass('/analista')} onClick={() => onClose()}>
                                 <Kanban size={20} />
                                 <span>Programación</span>
                             </NavLink>
-                            <NavLink to="/solicitudes/nueva" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/solicitudes/nueva" className={linkClass('/solicitudes/nueva')} onClick={() => onClose()}>
                                 <PlusCircle size={20} />
                                 <span>Nueva Solicitud</span>
                             </NavLink>
-                            <NavLink to="/solicitudes?tab=firmadas" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/solicitudes?tab=firmadas" className={linkClass('/solicitudes?tab=firmadas')} onClick={() => onClose()}>
                                 <FileText size={20} />
                                 <span>Recibos Firmados</span>
                             </NavLink>
@@ -101,7 +113,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3 mt-6">
                                 Roturación
                             </div>
-                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/roturacion" className={linkClass('/roturacion')} onClick={() => onClose()}>
                                 <Layers size={20} />
                                 <span>Asignación</span>
                             </NavLink>
@@ -114,19 +126,19 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {role === 'tecnico' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Menú Técnico</div>
-                            <NavLink to="/dashboard" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/dashboard" className={linkClass('/dashboard')} onClick={() => onClose()}>
                                 <LayoutDashboard size={20} />
                                 <span>Resumen</span>
                             </NavLink>
-                            <NavLink to="/solicitudes/nueva" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/solicitudes/nueva" className={linkClass('/solicitudes/nueva')} onClick={() => onClose()}>
                                 <PlusCircle size={20} />
                                 <span>Nueva Solicitud</span>
                             </NavLink>
-                            <NavLink to="/solicitudes" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/solicitudes" className={linkClass('/solicitudes')} onClick={() => onClose()}>
                                 <FileText size={20} />
                                 <span>Historial</span>
                             </NavLink>
-                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/roturacion" className={linkClass('/roturacion')} onClick={() => onClose()}>
                                 <Layers size={20} />
                                 <span>Roturación</span>
                             </NavLink>
@@ -137,23 +149,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {role === 'jefe_zona' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Gestión Zona</div>
-                            <NavLink to="/dashboard" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/dashboard" className={linkClass('/dashboard')} onClick={() => onClose()}>
                                 <LayoutDashboard size={20} />
                                 <span>Resumen</span>
                             </NavLink>
-                            <NavLink end to="/aprobaciones" className={linkClass} onClick={() => onClose()}>
+                            <NavLink end to="/aprobaciones" className={linkClass('/aprobaciones')} onClick={() => onClose()}>
                                 <Clock size={20} />
                                 <span>Por Aprobar</span>
                             </NavLink>
-                            <NavLink to="/aprobaciones?status=APROBADO_ZONA" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/aprobaciones?status=APROBADO_ZONA" className={linkClass('/aprobaciones?status=APROBADO_ZONA')} onClick={() => onClose()}>
                                 <CheckCircle size={20} />
                                 <span>Aprobadas</span>
                             </NavLink>
-                            <NavLink to="/aprobaciones?status=RECHAZADO" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/aprobaciones?status=RECHAZADO" className={linkClass('/aprobaciones?status=RECHAZADO')} onClick={() => onClose()}>
                                 <X size={20} />
                                 <span>Rechazadas</span>
                             </NavLink>
-                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/roturacion" className={linkClass('/roturacion')} onClick={() => onClose()}>
                                 <Layers size={20} />
                                 <span>Roturación</span>
                             </NavLink>
@@ -164,7 +176,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {role === 'auxiliar' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Auxiliar Campo</div>
-                            <NavLink to="/roturacion" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/roturacion" className={linkClass('/roturacion')} onClick={() => onClose()}>
                                 <Layers size={20} />
                                 <span>Roturación</span>
                             </NavLink>
@@ -177,7 +189,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     {role === 'operador' && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Mi Turno</div>
-                            <NavLink to="/operador" className={linkClass} onClick={() => onClose()}>
+                            <NavLink to="/operador" className={linkClass('/operador')} onClick={() => onClose()}>
                                 <Tractor size={20} />
                                 <span>Ejecución</span>
                             </NavLink>

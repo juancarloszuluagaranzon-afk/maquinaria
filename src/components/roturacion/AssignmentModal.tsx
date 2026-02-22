@@ -113,6 +113,25 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
             if (updateError) throw updateError;
 
             toast.success('Asignación guardada correctamente');
+
+            // --- WhatsApp Notification Logic ---
+            validAssignments.forEach(a => {
+                const contractor = contractors.find(c => c.id === a.contratista_id);
+                const laborName = getLaborLabel(selectedLabor);
+
+                const message = `*Nueva Asignación de Roturación Riopaila* 🚜\n\n` +
+                    `Hola *${contractor?.nombre}*,\n` +
+                    `Se le ha asignado la siguiente labor:\n\n` +
+                    `📍 *Hacienda:* ${data.hacienda} (Suerte ${data.suerte_codigo})\n` +
+                    `🛠 *Labor:* ${laborName}\n` +
+                    `📐 *Área:* ${a.area} ha\n\n` +
+                    `Por favor confirmar recibido.`;
+
+                const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+            // ------------------------------------
+
             onSuccess();
             onClose();
 

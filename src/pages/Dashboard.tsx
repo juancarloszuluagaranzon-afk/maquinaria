@@ -2,6 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import TechnicianDashboard from './TechnicianDashboard';
 import ZoneManagerDashboard from './ZoneManagerDashboard';
 import OperatorDashboard from './OperatorDashboard';
+import AnalystDashboard from './AnalystDashboard';
 
 export default function Dashboard() {
     const { profile, loading } = useAuth();
@@ -20,9 +21,9 @@ export default function Dashboard() {
         return <ZoneManagerDashboard />;
     }
 
-    // 3. Vista para ANALISTAS (Futuro)
+    // 3. Vista para ANALISTAS
     if (profile?.rol === 'analista') {
-        return <div className="p-8 text-white">🚧 Dashboard de Analista en Construcción 🚧</div>;
+        return <AnalystDashboard />;
     }
 
     // 4. Vista para OPERADORES

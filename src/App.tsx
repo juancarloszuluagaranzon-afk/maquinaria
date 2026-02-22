@@ -9,9 +9,11 @@ import RoturacionDashboard from './pages/RoturacionDashboard';
 import NewRequest from './pages/NewRequest';
 import OperatorDashboard from './pages/OperatorDashboard';
 import CostDashboard from './pages/CostDashboard';
+import Settings from './pages/Settings';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 import { Toaster } from 'react-hot-toast';
+import { Toaster as SonnerToaster } from 'sonner';
 
 function App() {
     return (
@@ -31,8 +33,10 @@ function App() {
                         <Route path="/analista" element={<AnalystDashboard />} />
                         <Route path="/operador" element={<OperatorDashboard />} />
                         <Route path="/costos" element={<CostDashboard />} />
+                        <Route path="/settings" element={<Settings />} />
                     </Route>
                 </Routes>
+                <SonnerToaster position="top-right" expand={true} richColors theme="dark" />
                 <Toaster position="bottom-right" toastOptions={{
                     style: {
                         background: '#1a1a1a',

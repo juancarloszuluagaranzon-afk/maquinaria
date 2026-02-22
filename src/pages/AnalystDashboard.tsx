@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { GlassCard } from '../components/ui/GlassCard';
 import { GlassSelect } from '../components/ui/GlassSelect';
 import { GlassToast } from '../components/ui/GlassToast';
-import { MapPin, Tractor, Calendar, User, MessageCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Tractor, Calendar, User, MessageCircle, AlertCircle, LogOut } from 'lucide-react';
 
 interface Contractor {
     id: string;
@@ -34,7 +34,7 @@ interface ProgramacionRequest {
 }
 
 export default function AnalystDashboard() {
-    const { } = useAuth();
+    const { profile, signOut } = useAuth();
     const [requests, setRequests] = useState<ProgramacionRequest[]>([]);
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [machinery, setMachinery] = useState<Machinery[]>([]);
@@ -148,7 +148,7 @@ export default function AnalystDashboard() {
             // Open in new tab
             window.open(whatsappUrl, '_blank');
 
-            // Refresh list (optional, or update local state)
+            // Refresh list
             fetchData();
 
         } catch (error) {
@@ -157,131 +157,151 @@ export default function AnalystDashboard() {
         }
     };
 
-    // Filter machinery logic removed as unused for now
-
-    if (loading) return <div className="p-8 text-center text-white">Cargando tablero...</div>;
+    if (loading) return (
+        <div className="relative min-h-screen bg-slate-900 flex items-center justify-center">
+            <div className="text-white animate-pulse">Cargando tablero de analista...</div>
+        </div>
+    );
 
     return (
-        <div className="space-y-6 pb-20">
-            <header>
-                <h1 className="text-3xl font-bold text-white tracking-tight">Programación Analista</h1>
-                <p className="text-white/60">Gestión de recursos y contratistas</p>
-            </header>
+        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pb-20 overflow-x-hidden">
+            {/* Ambient Light Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-purple-500/20 blur-3xl"></div>
+                <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"></div>
+            </div>
 
-            {toast && <GlassToast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
-
-            <div className="grid gap-6">
-                {requests.map(req => {
-                    const assign = assignments[req.id] || {};
-                    const relevantMachinery = assign.contractorId
-                        ? machinery.filter(m => m.contratista_id === assign.contractorId)
-                        : machinery; // Or empty if strictly enforcing hierarchy
-
-                    return (
-                        <GlassCard key={req.id} className="p-6">
-                            <div className="flex flex-col lg:flex-row gap-6">
-                                {/* Request Info */}
-                                <div className="flex-1 space-y-4">
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2 text-emerald-400 mb-1">
-                                                <MapPin size={18} />
-                                                <span className="font-bold text-xl">{req.suertes.codigo}</span>
-                                                <span className="text-white/60">({req.suertes.hacienda})</span>
-                                            </div>
-                                            <h3 className="text-xl font-medium text-white">{req.labores.nombre}</h3>
-                                            <p className="text-white/70">{req.actividades.nombre}</p>
-                                        </div>
-                                        <div className={`px-3 py-1 rounded-full text-sm font-bold border ${req.estado === 'ASIGNADO' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'}`}>
-                                            {req.estado}
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-4 text-base text-white/60">
-                                        <div className="flex items-center gap-2">
-                                            <User size={14} />
-                                            <span>Solicita: {req.usuarios?.nombre}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Calendar size={14} />
-                                            <span>{new Date(req.created_at).toLocaleDateString()}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <AlertCircle size={14} />
-                                            <span>{req.prioridades.asunto}</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono bg-white/10 px-2 rounded">Est: {req.horas_estimadas}h</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Costos Dinámicos */}
-                                    {assign.machineryId && (() => {
-                                        const selectedMachine = machinery.find(m => m.id === assign.machineryId);
-                                        const rate = selectedMachine?.tarifa_hora || 0;
-                                        if (rate === 0) return null;
-
-                                        const total = req.horas_estimadas * rate;
-                                        const perHa = total / (req.suertes.area_neta || 1);
-
-                                        return (
-                                            <div className="flex items-center gap-3 pt-4 border-t border-white/10">
-                                                <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-sm text-emerald-400 font-mono">
-                                                    <span className="text-white/40 mr-1">Total:</span>
-                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(total)}
-                                                </div>
-                                                <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-sm text-blue-400 font-mono">
-                                                    <span className="text-white/40 mr-1">$/Ha:</span>
-                                                    {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(perHa)}
-                                                </div>
-                                            </div>
-                                        );
-                                    })()}
-                                </div>
-
-                                {/* Assignment Section */}
-                                <div className="w-full lg:w-1/3 space-y-4 bg-white/5 p-4 rounded-xl border border-white/5">
-                                    <h4 className="text-base font-semibold text-white/80 mb-2 flex items-center gap-2">
-                                        <Tractor size={16} /> Asignación de Recursos
-                                    </h4>
-
-                                    <GlassSelect
-                                        label="Contratista"
-                                        placeholder="Seleccione..."
-                                        options={contractors.map(c => ({ value: c.id, label: c.nombre }))}
-                                        value={assign.contractorId || ''}
-                                        onChange={(e) => handleAssignmentChange(req.id, 'contractorId', e.target.value)}
-                                        className="text-sm"
-                                    />
-
-                                    <GlassSelect
-                                        label="Maquinaria"
-                                        placeholder={assign.contractorId ? "Seleccione máquina..." : "Seleccione contratista primero"}
-                                        options={relevantMachinery.map(m => ({ value: m.id, label: m.nombre }))}
-                                        value={assign.machineryId || ''}
-                                        onChange={(e) => handleAssignmentChange(req.id, 'machineryId', e.target.value)}
-                                        disabled={!assign.contractorId}
-                                        className="text-sm"
-                                    />
-
-                                    <button
-                                        onClick={() => saveAssignment(req)}
-                                        className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-emerald-900/20 active:scale-95"
-                                    >
-                                        <MessageCircle size={18} />
-                                        <span>Guardar y Notificar</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </GlassCard>
-                    );
-                })}
-
-                {requests.length === 0 && (
-                    <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
-                        <p className="text-white/60">No hay solicitudes aprobadas pendientes de asignación.</p>
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <header className="flex justify-between items-start mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">Programación Analista</h1>
+                        <p className="text-white/60">Gestión de recursos y contratistas • {profile?.nombre}</p>
                     </div>
-                )}
+                    <button
+                        onClick={signOut}
+                        className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-red-400 transition-colors border border-white/10"
+                        title="Cerrar Sesión"
+                    >
+                        <LogOut size={20} />
+                    </button>
+                </header>
+
+                {toast && <GlassToast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+                <div className="grid gap-6">
+                    {requests.map(req => {
+                        const assign = assignments[req.id] || {};
+                        const relevantMachinery = assign.contractorId
+                            ? machinery.filter(m => m.contratista_id === assign.contractorId)
+                            : machinery;
+
+                        return (
+                            <GlassCard key={req.id} className="p-6">
+                                <div className="flex flex-col lg:flex-row gap-6">
+                                    {/* Request Info */}
+                                    <div className="flex-1 space-y-4">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <div className="flex items-center gap-2 text-emerald-400 mb-1">
+                                                    <MapPin size={18} />
+                                                    <span className="font-bold text-xl">{req.suertes.codigo}</span>
+                                                    <span className="text-white/60">({req.suertes.hacienda})</span>
+                                                </div>
+                                                <h3 className="text-xl font-medium text-white">{req.labores.nombre}</h3>
+                                                <p className="text-white/70">{req.actividades.nombre}</p>
+                                            </div>
+                                            <div className={`px-3 py-1 rounded-full text-sm font-bold border ${req.estado === 'ASIGNADO' ? 'text-blue-400 border-blue-400/30 bg-blue-400/10' : 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10'}`}>
+                                                {req.estado === 'APROBADO_ZONA' ? 'PENDIENTE ASIGNACIÓN' : req.estado}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4 text-base text-white/60">
+                                            <div className="flex items-center gap-2">
+                                                <User size={14} />
+                                                <span>Solicita: {req.usuarios?.nombre}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Calendar size={14} />
+                                                <span>{new Date(req.created_at).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <AlertCircle size={14} />
+                                                <span>{req.prioridades?.asunto || 'Normal'}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono bg-white/10 px-2 rounded">Est: {req.horas_estimadas}h</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Costos Dinámicos */}
+                                        {assign.machineryId && (() => {
+                                            const selectedMachine = machinery.find(m => m.id === assign.machineryId);
+                                            const rate = selectedMachine?.tarifa_hora || 0;
+                                            if (rate === 0) return null;
+
+                                            const total = req.horas_estimadas * rate;
+                                            const perHa = total / (req.suertes.area_neta || 1);
+
+                                            return (
+                                                <div className="flex items-center gap-3 pt-4 border-t border-white/10">
+                                                    <div className="bg-emerald-500/10 border border-emerald-500/20 px-2 py-1 rounded text-sm text-emerald-400 font-mono">
+                                                        <span className="text-white/40 mr-1">Total:</span>
+                                                        {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(total)}
+                                                    </div>
+                                                    <div className="bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded text-sm text-blue-400 font-mono">
+                                                        <span className="text-white/40 mr-1">$/Ha:</span>
+                                                        {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(perHa)}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+
+                                    {/* Assignment Section */}
+                                    <div className="w-full lg:w-80 space-y-4 bg-white/5 p-4 rounded-xl border border-white/5 backdrop-blur-md">
+                                        <h4 className="text-base font-semibold text-white/80 mb-2 flex items-center gap-2">
+                                            <Tractor size={16} /> Asignación de Recursos
+                                        </h4>
+
+                                        <GlassSelect
+                                            label="Contratista"
+                                            placeholder="Seleccione..."
+                                            options={contractors.map(c => ({ value: c.id, label: c.nombre }))}
+                                            value={assign.contractorId || ''}
+                                            onChange={(e) => handleAssignmentChange(req.id, 'contractorId', e.target.value)}
+                                            className="text-sm"
+                                        />
+
+                                        <GlassSelect
+                                            label="Maquinaria"
+                                            placeholder={assign.contractorId ? "Seleccione máquina..." : "Seleccione contratista primero"}
+                                            options={relevantMachinery.map(m => ({ value: m.id, label: m.nombre }))}
+                                            value={assign.machineryId || ''}
+                                            onChange={(e) => handleAssignmentChange(req.id, 'machineryId', e.target.value)}
+                                            disabled={!assign.contractorId}
+                                            className="text-sm"
+                                        />
+
+                                        <button
+                                            onClick={() => saveAssignment(req)}
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95"
+                                        >
+                                            <MessageCircle size={18} />
+                                            <span>Guardar y Notificar</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </GlassCard>
+                        );
+                    })}
+
+                    {requests.length === 0 && (
+                        <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl">
+                            <Tractor className="h-12 w-12 text-white/20 mx-auto mb-4" />
+                            <p className="text-white/60">No hay solicitudes aprobadas pendientes de asignación.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
