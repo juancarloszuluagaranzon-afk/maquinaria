@@ -60,9 +60,11 @@ export function ReloadPrompt() {
                     duration: Infinity,
                     position: 'bottom-right',
                     style: {
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        background: '#ffffff',
+                        border: '2px solid #000000',
+                        borderRadius: '1rem',
+                        padding: '1rem',
+                        zIndex: 9999,
                     }
                 }
             )

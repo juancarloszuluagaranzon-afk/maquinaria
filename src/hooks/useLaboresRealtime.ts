@@ -24,9 +24,36 @@ export function useLaboresRealtime() {
                     // 1. Excluir notificaciones del mismo usuario
                     if (notification.created_by === user.id) return;
 
-                    // 2. Lógica de filtrado de tiempo (opcional según el payload)
-                    // El usuario pidió "filtra cambios >5min". 
-                    // Si es un FIN, el SQL ya calcula duracion_min.
+                    // 2. Lógica de filtrado por ROL y ZONA/HACIENDA
+                    const userRol = user.rol;
+                    const userZona = user.zona;
+                    const userHaciendas = user.hacienda_asignada || [];
+                    const notifZona = notification.zona_id;
+                    const notifHacienda = notification.hacienda;
+
+                    let shouldShow = false;
+                    const notifUserId = notification.usuario_id;
+
+                    // Regla de Oro: Si la notificación va dirigida a este usuario específico
+                    if (notifUserId === user.id) {
+                        shouldShow = true;
+                    }
+                    // A. Analistas, Auxiliares y Admin ven TODO
+                    else if (['analista', 'auxiliar', 'admin'].includes(userRol)) {
+                        shouldShow = true;
+                    }
+                    // B. Jefes de Zona: Ven su zona (o todas si es NULL)
+                    else if (userRol === 'jefe_zona') {
+                        shouldShow = (userZona === null || userZona === notifZona);
+                    }
+                    // C. Técnicos: Ven su zona Y sus haciendas asignadas
+                    else if (userRol === 'tecnico') {
+                        shouldShow = (userZona === notifZona && userHaciendas.includes(notifHacienda || ''));
+                    }
+
+                    if (!shouldShow) return;
+
+                    // 3. Lógica de filtrado de tiempo (opcional)
                     if (notification.tipo === 'FIN' && notification.data?.duracion_min <= 5) {
                         console.log('Notificación ignorada por duración corta (<5min)');
                         return;

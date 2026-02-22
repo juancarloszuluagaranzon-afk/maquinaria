@@ -7,6 +7,13 @@ cleanupOutdatedCaches();
 
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Permitir que el nuevo SW tome el control inmediatamente cuando se solicite
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
 // Manejo de eventos Push
 self.addEventListener('push', (event) => {
     if (!event.data) return;
