@@ -4,10 +4,10 @@ import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 
 export function useLaboresRealtime() {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !profile) return;
 
         const channel = supabase
             .channel('public:notificaciones')
@@ -25,9 +25,9 @@ export function useLaboresRealtime() {
                     if (notification.created_by === user.id) return;
 
                     // 2. Lógica de filtrado por ROL y ZONA/HACIENDA
-                    const userRol = user.rol;
-                    const userZona = user.zona;
-                    const userHaciendas = user.hacienda_asignada || [];
+                    const userRol = profile.rol;
+                    const userZona = profile.zona;
+                    const userHaciendas = profile.hacienda_asignada || [];
                     const notifZona = notification.zona_id;
                     const notifHacienda = notification.hacienda;
 
