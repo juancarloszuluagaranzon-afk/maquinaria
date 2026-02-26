@@ -27,7 +27,10 @@ export default function MainLayout() {
                     >
                         <Menu size={24} />
                     </button>
-                    <h1 className="text-lg font-bold text-white tracking-tight">Riopaila</h1>
+                    <div className="flex items-center gap-2">
+                        <img src="/logo.png" alt="Logo" className="h-7 w-7 object-cover rounded-full border border-white/10" />
+                        <h1 className="text-lg font-bold text-white tracking-tight">Labores <span className="text-cyan-400">Campo</span></h1>
+                    </div>
                 </div>
                 <NotificationBell />
             </header>
@@ -49,7 +52,7 @@ export default function MainLayout() {
                 <PushPrompt />
 
                 {/* Background Gradients Ambientales (Opcional, para dar profundidad) */}
-                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-emerald-900/10 via-black to-black -z-10 pointer-events-none" />
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/10 via-black to-black -z-10 pointer-events-none" />
 
                 <Outlet />
             </main>

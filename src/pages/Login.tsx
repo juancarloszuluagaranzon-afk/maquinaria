@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { GlassCard } from '../components/ui/GlassCard';
-import { Tractor, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Login() {
@@ -39,23 +39,23 @@ export default function Login() {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-[#051e11] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-green-900/40 via-[#051e11] to-[#020c07] p-4 text-white">
+        <div className="flex h-screen items-center justify-center bg-[#020c1a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/30 via-[#020c1a] to-[#01060f] p-4 text-white">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
                 className="w-full max-w-md"
             >
-                <GlassCard className={`border-t-4 ${error ? 'border-t-red-500/50 shadow-red-900/20' : 'border-t-green-500/50'}`}>
+                <GlassCard className={`border-t-4 ${error ? 'border-t-red-500/50 shadow-red-900/20' : 'border-t-cyan-500/50'}`}>
                     <div className="mb-8 text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10 ring-1 ring-green-500/30">
-                            <Tractor className="h-8 w-8 text-green-400" />
+                        <div className="mx-auto mb-6 flex h-32 w-32 items-center justify-center rounded-full bg-cyan-500/5 ring-1 ring-cyan-500/20 overflow-hidden">
+                            <img src="/logo.png" alt="Labores Campo" className="h-full w-full object-cover" />
                         </div>
                         <h1 className="text-3xl font-bold tracking-tight text-white/90">
-                            Riopaila <span className="text-green-400">2026</span>
+                            Labores <span className="text-cyan-400">Campo</span>
                         </h1>
                         <p className="mt-2 text-sm text-white/50">
-                            Gestión Inteligente de Maquinaria
+                            Riopaila Agrícola S.A.
                         </p>
                     </div>
 

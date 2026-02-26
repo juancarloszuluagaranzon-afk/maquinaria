@@ -20,7 +20,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             : isActive;
 
         return `flex items-center gap-3 p-3 rounded-xl transition-all duration-300 font-medium ${isTrulyActive
-            ? 'bg-emerald-500/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] border border-emerald-500/20'
+            ? 'bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.2)] border border-cyan-500/20'
             : 'text-white/60 hover:bg-white/5 hover:text-white'
             }`;
     };
@@ -53,10 +53,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </button>
 
                 {/* Profile Header */}
-                <div className="mb-8 mt-4 md:mt-0">
-                    <h2 className="text-xl font-bold text-white tracking-tight">Riopaila</h2>
-                    <div className="mt-2 flex items-center gap-3 bg-white/5 p-3 rounded-lg border border-white/5">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <div className="mb-8 mt-4 md:mt-0 px-2">
+                    <div className="flex items-center gap-3 mb-6">
+                        <img src="/logo.png" alt="Labores Campo" className="h-10 w-10 object-cover rounded-full border border-white/10" />
+                        <div>
+                            <h2 className="text-xl font-bold text-white tracking-tight leading-none">Labores</h2>
+                            <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest">Campo</span>
+                        </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
                             {profile?.nombre?.charAt(0) || 'U'}
                         </div>
                         <div className="overflow-hidden">

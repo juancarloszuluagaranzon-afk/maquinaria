@@ -38,7 +38,11 @@ export function ReloadPrompt() {
                         <div className="flex gap-2">
                             <button
                                 className="px-3 py-1.5 bg-rp-green-600 hover:bg-rp-green-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
-                                onClick={() => updateServiceWorker(true)}
+                                onClick={() => {
+                                    updateServiceWorker(true)
+                                    // Fallback to reload manually if it doesn't automatically trigger via SW controllerchange
+                                    setTimeout(() => window.location.reload(), 500)
+                                }}
                             >
                                 <RefreshCcw size={14} />
                                 Actualizar

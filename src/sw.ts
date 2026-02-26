@@ -14,6 +14,10 @@ self.addEventListener('message', (event) => {
     }
 });
 
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
 // Manejo de eventos Push
 self.addEventListener('push', (event) => {
     if (!event.data) return;
