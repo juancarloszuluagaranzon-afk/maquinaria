@@ -44,6 +44,7 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
         const allowedContractors = [
             'AGROPECAM APOYO PARA EL CAMPO S.A.S.',
             'BIENES Y MAQUINARIA SAS',
+            'CAMARO LABORES AGRICOLAS S.A.S.',
             'Riopaila Castilla',
             'SERVI AGRICOLAS DIAGO S.A.S.',
             'SERVICIOS AGROMECANICOS DE OCCIDENTES S.A.S.'
