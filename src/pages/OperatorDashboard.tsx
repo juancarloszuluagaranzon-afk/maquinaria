@@ -321,6 +321,7 @@ export default function OperatorDashboard() {
                 .from('roturacion_asignaciones')
                 .select(`
                     *,
+                    contratista:contratistas!roturacion_asignaciones_contratista_id_fkey (nombre),
                     roturacion_seguimiento (
                         id,
                         estado_1ra_labor,
@@ -339,7 +340,12 @@ export default function OperatorDashboard() {
 
             if (error) throw error;
 
-            setRoturacionJobs(data || []);
+            // Filter by empresa client-side (RLS handles server-side, but this guarantees UI consistency)
+            const filtered = profile?.empresa
+                ? (data || []).filter((j: any) => j.contratista?.nombre === profile.empresa)
+                : (data || []);
+
+            setRoturacionJobs(filtered);
         } catch (err: any) {
             toast.error('Error cargando asignaciones de roturación');
         } finally {
