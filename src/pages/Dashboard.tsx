@@ -26,8 +26,8 @@ export default function Dashboard() {
         return <AnalystDashboard />;
     }
 
-    // 4. Vista para OPERADORES
-    if (profile?.rol === 'operador') {
+    // 4. Vista para OPERADORES / CONTRATISTAS
+    if (profile?.rol === 'operador' || profile?.rol === 'contratista') {
         return <OperatorDashboard />;
     }
 

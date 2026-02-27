@@ -191,8 +191,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                     {/* Enlaces Exclusivos ANALISTAS - REMOVED (Merged above) */}
 
-                    {/* Enlaces Exclusivos OPERADORES */}
-                    {role === 'operador' && (
+                    {/* Enlaces Exclusivos OPERADORES / CONTRATISTAS */}
+                    {(role === 'operador' || role === 'contratista') && (
                         <>
                             <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Mi Turno</div>
                             <NavLink to="/operador" className={linkClass('/operador')} onClick={() => onClose()}>
