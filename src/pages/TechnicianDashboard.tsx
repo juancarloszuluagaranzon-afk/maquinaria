@@ -272,17 +272,19 @@ export default function TechnicianDashboard() {
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {requests.map((req) => (
-                                    <GlassCard key={req.id} className="relative group hover:border-white/30 transition-all">
-                                        {/* Badge de Estado */}
-                                        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border ${getStatusColor(req.estado)}`}>
-                                            {req.estado.replace('_', ' ')}
-                                        </div>
+                                    <GlassCard key={req.id} className="relative group hover:border-white/30 transition-all flex flex-col">
+                                        <div className="flex items-start justify-between gap-2 mb-3">
+                                            {/* Título: Suerte */}
+                                            <div className="flex flex-wrap items-center gap-2 text-emerald-400">
+                                                <MapPin size={18} className="shrink-0" />
+                                                <span className="font-bold text-xl leading-none">{req.suertes?.codigo}</span>
+                                                <span className="text-sm text-white/50 leading-none">({req.suertes?.hacienda})</span>
+                                            </div>
 
-                                        {/* Título: Suerte */}
-                                        <div className="flex items-center gap-2 mb-3 text-emerald-400">
-                                            <MapPin size={18} />
-                                            <span className="font-bold text-xl">{req.suertes?.codigo}</span>
-                                            <span className="text-sm text-white/50 ml-1">({req.suertes?.hacienda})</span>
+                                            {/* Badge de Estado */}
+                                            <div className={`px-2 py-1 rounded-full text-xs text-center font-bold border whitespace-nowrap shrink-0 ${getStatusColor(req.estado)}`}>
+                                                {req.estado.replace('_', ' ')}
+                                            </div>
                                         </div>
 
                                         {/* Detalles */}
@@ -340,14 +342,15 @@ export default function TechnicianDashboard() {
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {executions.map((exec) => (
-                                    <GlassCard key={exec.id} className="relative group hover:border-blue-400/30 transition-all">
-                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border border-blue-400/30 bg-blue-400/10 text-blue-400">
-                                            PENDIENTE FIRMA
-                                        </div>
-
-                                        <div className="flex items-center gap-2 mb-3 text-blue-400">
-                                            <FileText size={18} />
-                                            <span className="font-bold text-xl">Reporte de Labor</span>
+                                    <GlassCard key={exec.id} className="relative group hover:border-blue-400/30 transition-all flex flex-col">
+                                        <div className="flex items-start justify-between gap-2 mb-3">
+                                            <div className="flex flex-wrap items-center gap-2 text-blue-400">
+                                                <FileText size={18} className="shrink-0" />
+                                                <span className="font-bold text-xl leading-none">Reporte de Labor</span>
+                                            </div>
+                                            <div className="px-2 py-1 rounded-full text-xs font-bold border border-blue-400/30 bg-blue-400/10 text-blue-400 whitespace-nowrap shrink-0 text-center">
+                                                PENDIENTE FIRMA
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2 text-base text-white/80">
@@ -397,14 +400,15 @@ export default function TechnicianDashboard() {
                         ) : (
                             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {signedExecutions.map((exec) => (
-                                    <GlassCard key={exec.id} className="relative group hover:border-purple-400/30 transition-all bg-purple-500/5">
-                                        <div className="absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-bold border border-purple-400/30 bg-purple-400/10 text-purple-400 flex items-center gap-1">
-                                            <CheckCircle size={12} /> FIRMADO
-                                        </div>
-
-                                        <div className="flex items-center gap-2 mb-3 text-purple-400">
-                                            <FileText size={18} />
-                                            <span className="font-bold text-xl">Labor Ejecutada</span>
+                                    <GlassCard key={exec.id} className="relative group hover:border-purple-400/30 transition-all bg-purple-500/5 flex flex-col">
+                                        <div className="flex items-start justify-between gap-2 mb-3">
+                                            <div className="flex flex-wrap items-center gap-2 text-purple-400">
+                                                <FileText size={18} className="shrink-0" />
+                                                <span className="font-bold text-xl leading-none">Labor Ejecutada</span>
+                                            </div>
+                                            <div className="px-2 py-1 rounded-full text-xs font-bold border border-purple-400/30 bg-purple-400/10 text-purple-400 flex items-center gap-1 justify-center whitespace-nowrap shrink-0">
+                                                <CheckCircle size={12} /> FIRMADO
+                                            </div>
                                         </div>
 
                                         <div className="space-y-2 text-base text-white/80">
