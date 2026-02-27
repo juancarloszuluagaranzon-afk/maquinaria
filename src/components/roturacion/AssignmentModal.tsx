@@ -78,9 +78,14 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
 
     useEffect(() => {
         if (isOpen && data) {
+            // Prioritize PROGRAMADO first so new assignments are defaulted
             if (data.estado_1ra_labor === 'PROGRAMADO') setSelectedLabor('1RA');
             else if (data.estado_2da_labor === 'PROGRAMADO') setSelectedLabor('2DA');
             else if (data.estado_fertilizacion === 'PROGRAMADO') setSelectedLabor('FER');
+            // If none are programmed, fall back to active ones so they can see assignments
+            else if (data.estado_1ra_labor === 'PENDIENTE' || data.estado_1ra_labor === 'EN_EJECUCION') setSelectedLabor('1RA');
+            else if (data.estado_2da_labor === 'PENDIENTE' || data.estado_2da_labor === 'EN_EJECUCION') setSelectedLabor('2DA');
+            else if (data.estado_fertilizacion === 'PENDIENTE' || data.estado_fertilizacion === 'EN_EJECUCION') setSelectedLabor('FER');
         }
     }, [isOpen, data]);
 
@@ -135,11 +140,18 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
                 created_by: user?.id
             }));
 
-            const { error } = await supabase
+            // Eliminar asignaciones anteriores para esta labor si es una actualización
+            await supabase
+                .from('roturacion_asignaciones')
+                .delete()
+                .eq('roturacion_id', data.id)
+                .eq('labor', selectedLabor);
+
+            const { error: insertError } = await supabase
                 .from('roturacion_asignaciones')
                 .insert(records);
 
-            if (error) throw error;
+            if (insertError) throw insertError;
 
             // Update Labor Status to ASIGNADO
             const statusField =
@@ -226,12 +238,12 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
                     <div className="flex gap-2 bg-black/40 p-1 rounded-xl border border-white/10">
                         {['1RA', '2DA', 'FER'].map((labor) => {
                             const isActive = selectedLabor === labor;
-                            // Check if this labor is actually programmed for this row
+                            // Check if this labor is active (programmed, pending, execution, etc)
                             let isProgrammed = false;
                             if (data) {
-                                if (labor === '1RA' && data.estado_1ra_labor === 'PROGRAMADO') isProgrammed = true;
-                                if (labor === '2DA' && data.estado_2da_labor === 'PROGRAMADO') isProgrammed = true;
-                                if (labor === 'FER' && data.estado_fertilizacion === 'PROGRAMADO') isProgrammed = true;
+                                if (labor === '1RA' && !!data.estado_1ra_labor) isProgrammed = true;
+                                if (labor === '2DA' && !!data.estado_2da_labor) isProgrammed = true;
+                                if (labor === 'FER' && !!data.estado_fertilizacion) isProgrammed = true;
                             }
 
                             return (
@@ -245,8 +257,8 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
                                         : 'text-white/50 hover:text-white hover:bg-white/5'
                                         } ${!isProgrammed ? 'opacity-50' : ''}`}
                                 >
-                                    {getLaborLabel(labor)}
-                                    {!isProgrammed && <span className="ml-1 text-[10px] opacity-50">(N/A)</span>}
+                                    {labor === 'FER' ? 'Fertilización' : `${labor} Roturación`}
+                                    {!isProgrammed && ' (N/A)'}
                                 </button>
                             );
                         })}
