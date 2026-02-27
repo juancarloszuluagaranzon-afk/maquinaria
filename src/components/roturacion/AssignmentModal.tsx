@@ -27,18 +27,7 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [assignments, setAssignments] = useState<Assignment[]>([{ contratista_id: '', area: '' }]);
 
-    useEffect(() => {
-        if (isOpen) {
-            loadContractors();
-            // Default labor selection logic could go here
-            if (data) {
-                if (data.estado_1ra_labor === 'PROGRAMADO') setSelectedLabor('1RA');
-                else if (data.estado_2da_labor === 'PROGRAMADO') setSelectedLabor('2DA');
-                else if (data.estado_fertilizacion === 'PROGRAMADO') setSelectedLabor('FER');
-            }
-            setAssignments([{ contratista_id: '', area: data?.area_neta?.toString() || '' }]);
-        }
-    }, [isOpen, data]);
+    // UseEffect logic moved to the main data fetcher below
 
     const loadContractors = async () => {
         const allowedContractors = [
@@ -58,6 +47,49 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
 
         if (data) setContractors(data);
     };
+
+    const fetchExistingAssignments = async () => {
+        if (!data) return;
+        try {
+            const { data: existingData, error } = await supabase
+                .from('roturacion_asignaciones')
+                .select('contratista_id, area_asignada, labor')
+                .eq('roturacion_id', data.id)
+                .eq('labor', selectedLabor);
+
+            if (error) throw error;
+
+            if (existingData && existingData.length > 0) {
+                setAssignments(existingData.map(a => ({
+                    contratista_id: a.contratista_id,
+                    area: a.area_asignada.toString()
+                })));
+            } else {
+                const laborArea =
+                    selectedLabor === '1RA' ? (data?.area_programada_1ra ?? data?.area_neta) :
+                        selectedLabor === '2DA' ? (data?.area_programada_2da ?? data?.area_neta) :
+                            (data?.area_programada_fer ?? data?.area_neta);
+                setAssignments([{ contratista_id: '', area: laborArea?.toString() || '' }]);
+            }
+        } catch (error) {
+            console.error('Error fetching existing assignments:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (isOpen && data) {
+            if (data.estado_1ra_labor === 'PROGRAMADO') setSelectedLabor('1RA');
+            else if (data.estado_2da_labor === 'PROGRAMADO') setSelectedLabor('2DA');
+            else if (data.estado_fertilizacion === 'PROGRAMADO') setSelectedLabor('FER');
+        }
+    }, [isOpen, data]);
+
+    useEffect(() => {
+        if (isOpen && data) {
+            loadContractors();
+            fetchExistingAssignments();
+        }
+    }, [isOpen, selectedLabor, data]);
 
     const handleAddAssignment = () => {
         setAssignments([...assignments, { contratista_id: '', area: '' }]);
@@ -202,19 +234,11 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
                                 if (labor === 'FER' && data.estado_fertilizacion === 'PROGRAMADO') isProgrammed = true;
                             }
 
-                            // Area sugerida según la labor
-                            const laborArea =
-                                labor === '1RA' ? (data?.area_programada_1ra ?? data?.area_neta) :
-                                    labor === '2DA' ? (data?.area_programada_2da ?? data?.area_neta) :
-                                        (data?.area_programada_fer ?? data?.area_neta);
-
                             return (
                                 <button
                                     key={labor}
                                     onClick={() => {
                                         setSelectedLabor(labor as '1RA' | '2DA' | 'FER');
-                                        // Resetear assignments — cada labor es independiente
-                                        setAssignments([{ contratista_id: '', area: laborArea?.toString() || '' }]);
                                     }}
                                     className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isActive
                                         ? 'bg-blue-500 text-white shadow-lg'
