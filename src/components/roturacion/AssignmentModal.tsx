@@ -41,9 +41,18 @@ export default function AssignmentModal({ isOpen, onClose, data, onSuccess }: As
     }, [isOpen, data]);
 
     const loadContractors = async () => {
+        const allowedContractors = [
+            'AGROPECAM APOYO PARA EL CAMPO S.A.S.',
+            'BIENES Y MAQUINARIA SAS',
+            'Riopaila Castilla',
+            'SERVI AGRICOLAS DIAGO S.A.S.',
+            'SERVICIOS AGROMECANICOS DE OCCIDENTES S.A.S.'
+        ];
+
         const { data } = await supabase
             .from('contratistas')
             .select('id, nombre')
+            .in('nombre', allowedContractors)
             .order('nombre');
 
         if (data) setContractors(data);
