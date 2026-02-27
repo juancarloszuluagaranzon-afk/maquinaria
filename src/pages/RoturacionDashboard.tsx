@@ -87,6 +87,7 @@ export default function RoturacionDashboard() {
     };
 
     const [viewMode, setViewMode] = useState<'PENDING' | 'FINISHED'>('PENDING');
+    const [laborFilter, setLaborFilter] = useState<'ALL' | '1RA' | '2DA' | 'FER'>('ALL');
 
     const basicFilteredData = data.filter(item => {
         const matchesZone = selectedZone === 'ALL' || item.zona === selectedZone;
@@ -96,9 +97,21 @@ export default function RoturacionDashboard() {
     });
 
     const filteredData = basicFilteredData.filter(item => {
-        const isFinished = item.estado_1ra_labor === 'TERMINADO' &&
-            item.estado_2da_labor === 'TERMINADO' &&
-            item.estado_fertilizacion === 'TERMINADO';
+        if (laborFilter === 'ALL') {
+            const isFinished = item.estado_1ra_labor === 'TERMINADO' &&
+                item.estado_2da_labor === 'TERMINADO' &&
+                item.estado_fertilizacion === 'TERMINADO';
+            return viewMode === 'FINISHED' ? isFinished : !isFinished;
+        }
+
+        let isFinished = false;
+        if (laborFilter === '1RA') {
+            isFinished = item.estado_1ra_labor === 'TERMINADO';
+        } else if (laborFilter === '2DA') {
+            isFinished = item.estado_2da_labor === 'TERMINADO';
+        } else if (laborFilter === 'FER') {
+            isFinished = item.estado_fertilizacion === 'TERMINADO';
+        }
 
         return viewMode === 'FINISHED' ? isFinished : !isFinished;
     });
@@ -281,6 +294,20 @@ export default function RoturacionDashboard() {
                             </select>
                         </div>
                     )}
+
+                    <div className="flex items-center gap-2">
+                        <Filter size={18} className="text-white/30" />
+                        <select
+                            value={laborFilter}
+                            onChange={e => setLaborFilter(e.target.value as any)}
+                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                        >
+                            <option value="ALL">Todas las Labores</option>
+                            <option value="1RA">1a Roturación</option>
+                            <option value="2DA">2a Roturación</option>
+                            <option value="FER">Fertilización</option>
+                        </select>
+                    </div>
 
                     <button
                         onClick={fetchData}
