@@ -151,7 +151,7 @@ export default function OperatorDashboard() {
     }, [user?.id]);
 
     useEffect(() => {
-        if (profile?.rol !== 'operador') return;
+        if (profile?.rol !== 'operador' && profile?.rol !== 'contratista') return;
         if (activeTab === 'labores') fetchJobs();
         else if (activeTab === 'historial') fetchHistory();
         else if (activeTab === 'roturacion') fetchRoturacion();
@@ -291,7 +291,7 @@ export default function OperatorDashboard() {
                     )
                 `);
 
-            if (profile?.rol === 'operador') {
+            if (profile?.rol === 'operador' || profile?.rol === 'contratista') {
                 rotQuery = rotQuery.or(`contratista_id.eq.${profile.empresa},operador_id.eq.${user?.id}`);
             }
 
