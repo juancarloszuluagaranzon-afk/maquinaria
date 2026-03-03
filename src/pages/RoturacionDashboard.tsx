@@ -125,11 +125,11 @@ export default function RoturacionDashboard() {
 
     // Stats Calculation Logic
     const calculateStats = () => {
-        const totalArea = filteredData.reduce((sum, row) => sum + (row.area_neta || 0), 0);
+        const totalArea = basicFilteredData.reduce((sum, row) => sum + (row.area_neta || 0), 0);
 
-        const finished1ra = filteredData.filter(r => r.estado_1ra_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
-        const finished2da = filteredData.filter(r => r.estado_2da_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
-        const finishedFer = filteredData.filter(r => r.estado_fertilizacion === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+        const finished1ra = basicFilteredData.filter(r => r.estado_1ra_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+        const finished2da = basicFilteredData.filter(r => r.estado_2da_labor === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
+        const finishedFer = basicFilteredData.filter(r => r.estado_fertilizacion === 'TERMINADO').reduce((sum, r) => sum + (r.area_neta || 0), 0);
 
         return {
             total: totalArea,
@@ -139,12 +139,15 @@ export default function RoturacionDashboard() {
                 laborFer: finishedFer
             },
             pending: {
-                labor1: totalArea - finished1ra,
-                labor2: totalArea - finished2da,
-                laborFer: totalArea - finishedFer
+                labor1: Math.max(0, totalArea - finished1ra),
+                labor2: Math.max(0, totalArea - finished2da),
+                laborFer: Math.max(0, totalArea - finishedFer)
             }
         };
     };
+
+    const stats = calculateStats();
+
 
     return (
         <div className="p-6 md:p-10 space-y-8 min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
@@ -194,7 +197,7 @@ export default function RoturacionDashboard() {
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1">Área Total</h3>
                     <div className="text-3xl font-bold text-white font-mono">
-                        {calculateStats().total.toFixed(2)} <span className="text-lg text-white/50">ha</span>
+                        {stats.total.toFixed(2)} <span className="text-lg text-white/50">ha</span>
                     </div>
                     <div className="mt-2 text-xs text-white/40">
                         Total de suertes filtradas
@@ -208,15 +211,15 @@ export default function RoturacionDashboard() {
                     <div className="space-y-1">
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">1a Roturacion</span>
-                            <span className="font-mono text-emerald-400">{calculateStats().finished.labor1.toFixed(1)} ha</span>
+                            <span className="font-mono text-emerald-400">{stats.finished.labor1.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">2a Roturacion</span>
-                            <span className="font-mono text-emerald-400">{calculateStats().finished.labor2.toFixed(1)} ha</span>
+                            <span className="font-mono text-emerald-400">{stats.finished.labor2.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">Fertilizacion</span>
-                            <span className="font-mono text-emerald-400">{calculateStats().finished.laborFer.toFixed(1)} ha</span>
+                            <span className="font-mono text-emerald-400">{stats.finished.laborFer.toFixed(1)} ha</span>
                         </div>
                     </div>
                 </div>
@@ -228,15 +231,15 @@ export default function RoturacionDashboard() {
                     <div className="space-y-1">
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">1a Roturacion</span>
-                            <span className="font-mono text-yellow-400">{calculateStats().pending.labor1.toFixed(1)} ha</span>
+                            <span className="font-mono text-yellow-400">{stats.pending.labor1.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">2a Roturacion</span>
-                            <span className="font-mono text-yellow-400">{calculateStats().pending.labor2.toFixed(1)} ha</span>
+                            <span className="font-mono text-yellow-400">{stats.pending.labor2.toFixed(1)} ha</span>
                         </div>
                         <div className="flex justify-between text-sm">
                             <span className="text-white/70">Fertilizacion</span>
-                            <span className="font-mono text-yellow-400">{calculateStats().pending.laborFer.toFixed(1)} ha</span>
+                            <span className="font-mono text-yellow-400">{stats.pending.laborFer.toFixed(1)} ha</span>
                         </div>
                     </div>
                 </div>
