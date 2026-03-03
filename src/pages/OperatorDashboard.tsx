@@ -211,6 +211,9 @@ export default function OperatorDashboard() {
         if (activeTab === 'labores' && hasMaquinaria) fetchJobs();
         else if (activeTab === 'historial') fetchHistory();
         else if (activeTab === 'roturacion' && hasRoturacion) fetchRoturacion();
+
+        // Always fetch suertes for emergency/traslado mapping if operator/contractor
+        fetchAllSuertes();
     }, [profile, activeTab, accessLoading, hasMaquinaria, hasRoturacion]);
 
     useEffect(() => {
@@ -249,7 +252,7 @@ export default function OperatorDashboard() {
             // Check machinery
             const { data: machineryExec } = await supabase
                 .from('ejecuciones')
-                .select('*')
+                .select(`*, suertes (codigo, hacienda)`)
                 .eq('operador_id', user.id)
                 .is('fin', null)
                 .order('inicio', { ascending: false })
@@ -270,6 +273,22 @@ export default function OperatorDashboard() {
             setActiveRotExec(rotExec);
         } catch (err) {
             console.error('Error fetching active executions:', err);
+        }
+    };
+
+    const fetchAllSuertes = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('suertes')
+                .select('id, codigo, hacienda')
+                .eq('estado', 'ACTIVO')
+                .order('hacienda', { ascending: true })
+                .order('codigo', { ascending: true });
+
+            if (error) throw error;
+            setAllSuertes(data || []);
+        } catch (err) {
+            console.error('Error fetching suertes:', err);
         }
     };
 
@@ -427,6 +446,10 @@ export default function OperatorDashboard() {
     };
 
     // ── Roturacion Actions ──
+
+    // Non-labor Suerte selection
+    const [allSuertes, setAllSuertes] = useState<any[]>([]);
+    const [selectedSuerteId, setSelectedSuerteId] = useState<string>('');
 
     const openRotStartModal = (asigId: string) => {
         if (activeRotExec || activeExecution) { toast.error('Ya tienes una actividad en curso.'); return; }
@@ -598,11 +621,14 @@ export default function OperatorDashboard() {
     const sendWhatsApp = (type: 'START' | 'END', job: Job | undefined, execData: any, endData?: any, receiptUrl?: string) => {
         let message = '';
         const mapLink = `https://www.google.com/maps?q=${execData.lat_inicio || execData.lat_fin},${execData.lon_inicio || execData.lon_fin}`;
+        const targetHacienda = job ? job.suertes?.hacienda : execData.suertes?.hacienda;
+        const targetCodigo = job ? job.suertes?.codigo : execData.suertes?.codigo;
+
         if (type === 'START') {
             if (job) {
-                message = `🚜 *INICIO DE ${executionType}*\n\n📍 *Suerte:* ${job.suertes.codigo}\n🚜 *Maquinaria:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
+                message = `🚜 *INICIO DE ${execData.tipo}*\n\n📍 *Lugar:* ${targetHacienda} - Suerte ${targetCodigo}\n🚜 *Maquinaria:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
             } else {
-                message = `⚠️ *INICIO DE ${execData.tipo}*\n\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
+                message = `⚠️ *INICIO DE ${execData.tipo}*\n\n📍 *Lugar:* ${targetHacienda || 'N/A'} - Suerte ${targetCodigo || 'N/A'}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
             }
         } else {
             const dur = ((new Date(execData.fin).getTime() - new Date(execData.inicio).getTime()) / 3600000).toFixed(2);
@@ -620,25 +646,38 @@ export default function OperatorDashboard() {
     const handleStartExecution = async () => {
         if (!horometro) { toast.error('Ingrese el Horómetro'); return; }
         if (!gpsCoords) { toast.error('Capture la ubicación GPS'); return; }
-        if ((executionType === 'TRASLADO' || executionType === 'EMERGENCIA') && !selectedJobId && jobs.length > 0) {
-            toast.error('Debe seleccionar una suerte para imputar el costo'); return;
+
+        const isNonLabor = executionType === 'TRASLADO' || executionType === 'EMERGENCIA';
+        if (isNonLabor && !selectedSuerteId) {
+            toast.error('Debe seleccionar una suerte de la base de datos para imputar el costo'); return;
         }
 
         try {
-            const job = selectedJobId ? jobs.find(j => j.id === selectedJobId) : undefined;
+            const job = executionType === 'LABOR' && selectedJobId ? jobs.find(j => j.id === selectedJobId) : undefined;
             const machineId = job ? job.maquinaria_id : (jobs[0]?.maquinaria_id || null);
-            const { data: newExec, error } = await supabase.from('ejecuciones').insert({
-                programacion_id: selectedJobId, operador_id: user?.id, maquinaria_id: machineId,
+
+            const insertData: any = {
+                operador_id: user?.id, maquinaria_id: machineId,
                 inicio: new Date().toISOString(), horometro_inicio: parseFloat(horometro),
                 lat_inicio: gpsCoords.lat, lon_inicio: gpsCoords.lng, tipo: executionType
-            }).select().single();
+            };
+
+            if (executionType === 'LABOR') {
+                insertData.programacion_id = selectedJobId;
+            } else {
+                insertData.suerte_id = selectedSuerteId;
+            }
+
+            const { data: newExec, error } = await supabase.from('ejecuciones').insert(insertData).select(`*, suertes (codigo, hacienda)`).single();
             if (error) throw error;
+
             if (executionType === 'LABOR' && selectedJobId) {
                 await supabase.from('programaciones').update({ estado: 'EN_EJECUCION' }).eq('id', selectedJobId);
             }
+
             setActiveExecution(newExec); setShowStartModal(false);
             toast.success(`${executionType} iniciado`);
-            fetchJobs();
+            if (executionType === 'LABOR') fetchJobs();
             sendWhatsApp('START', job, newExec);
         } catch (err: any) { toast.error('Error al iniciar: ' + err.message); }
     };
@@ -651,15 +690,23 @@ export default function OperatorDashboard() {
             const endTime = new Date();
             const durationHours = (endTime.getTime() - new Date(activeExecution.inicio).getTime()) / 3600000;
             const job = activeExecution.programacion_id ? jobs.find(j => j.id === activeExecution.programacion_id) : undefined;
-            const realCost = job ? durationHours * (job.tarifa_hora || 0) : 0;
+
+            // Get tarifa hora: either from job, or query machine if non-labor
+            let tarifaHora = job?.tarifa_hora || 0;
+            if (!job && activeExecution.maquinaria_id) {
+                const { data: maqData } = await supabase.from('maquinaria').select('tarifa_hora').eq('id', activeExecution.maquinaria_id).single();
+                if (maqData) tarifaHora = maqData.tarifa_hora;
+            }
+
+            const realCost = durationHours * tarifaHora;
 
             const rData = {
-                empresa: job?.contratistas.nombre || 'N/A', fecha: endTime.toLocaleDateString('es-CO'),
+                empresa: profile?.empresa || 'N/A', fecha: endTime.toLocaleDateString('es-CO'),
                 maquina: job?.maquinaria.nombre || 'N/A', operador: profile?.nombre || 'N/A',
                 inicio: new Date(activeExecution.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
                 fin: endTime.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
                 totalHoras: durationHours.toFixed(2),
-                tarifaHora: job?.tarifa_hora ? fmt.format(job.tarifa_hora) : undefined,
+                tarifaHora: tarifaHora ? fmt.format(tarifaHora) : undefined,
                 costoTotal: fmt.format(realCost),
                 costoPorHa: job?.suertes.area_neta ? fmt.format(realCost / job.suertes.area_neta) : undefined,
                 tipo: activeExecution.tipo, horometroInicio: activeExecution.horometro_inicio || 0,
@@ -1089,19 +1136,19 @@ export default function OperatorDashboard() {
                             {showStartModal ? `Iniciar ${executionType === 'LABOR' ? 'Labor' : executionType}` : 'Finalizar Actividad'}
                         </h2>
                         <div className="space-y-6">
-                            {(executionType === 'TRASLADO' || executionType === 'EMERGENCIA') && showStartModal && jobs.length > 0 && (
+                            {(executionType === 'TRASLADO' || executionType === 'EMERGENCIA') && showStartModal && (
                                 <div>
                                     <label className="block text-white/60 text-sm font-bold mb-2 ml-1">IMPUTAR COSTO A SUERTE</label>
                                     <div className="relative">
                                         <select
-                                            value={selectedJobId || ''}
-                                            onChange={(e) => setSelectedJobId(e.target.value)}
+                                            value={selectedSuerteId}
+                                            onChange={(e) => setSelectedSuerteId(e.target.value)}
                                             className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-4 pr-10 text-white text-md font-bold focus:outline-none focus:border-purple-500 transition-all appearance-none"
                                         >
-                                            <option value="" disabled className="text-gray-500">Seleccione la Suerte</option>
-                                            {jobs.map(j => (
-                                                <option key={j.id} value={j.id} className="bg-slate-800">
-                                                    Suerte: {j.suertes?.codigo} - {j.suertes?.hacienda} ({j.labores?.nombre})
+                                            <option value="" disabled className="text-gray-500">Seleccionar de BD...</option>
+                                            {allSuertes.map(s => (
+                                                <option key={s.id} value={s.id} className="bg-slate-800">
+                                                    {s.hacienda} - Suerte {s.codigo}
                                                 </option>
                                             ))}
                                         </select>
@@ -1109,7 +1156,7 @@ export default function OperatorDashboard() {
                                             <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                                         </div>
                                     </div>
-                                    <p className="text-xs text-white/40 mt-2 ml-1">Para {executionType.toLowerCase()}s, el costo se cargará a la suerte elegida.</p>
+                                    <p className="text-xs text-white/40 mt-2 ml-1">El costo de la máquina principal será cargado a esta Suerte en la base general.</p>
                                 </div>
                             )}
 
