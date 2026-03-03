@@ -53,7 +53,10 @@ export default function TechnicianDashboard() {
         try {
             if (!user) return;
 
-            let query = supabase
+            const isAnalystOrAdmin = profile?.rol === 'analista' || profile?.rol === 'admin';
+
+            // 1. Ejecuciones regulares
+            let machQuery = supabase
                 .from('ejecuciones')
                 .select(`
                     *,
@@ -66,19 +69,55 @@ export default function TechnicianDashboard() {
                     ),
                     maquinaria (nombre, tarifa_hora)
                 `)
-                .not('firma_tecnico_url', 'is', null) // Signed
+                .not('firma_tecnico_url', 'is', null)
                 .order('fin', { ascending: false });
 
-            // Only filter by user if NOT analyst or admin
-            const isAnalystOrAdmin = profile?.rol === 'analista' || profile?.rol === 'admin';
-            if (!isAnalystOrAdmin) {
-                query = query.eq('programaciones.tecnico_id', user.id);
+            if (!isAnalystOrAdmin) machQuery = machQuery.eq('programaciones.tecnico_id', user.id);
+
+            // 2. Ejecuciones de roturación
+            let rotQuery = supabase
+                .from('roturacion_ejecuciones')
+                .select(`
+                    *,
+                    roturacion_asignaciones!inner (
+                        labor,
+                        contratistas (nombre),
+                        roturacion_seguimiento!inner (
+                            suertes!inner (codigo, hacienda, zona)
+                        )
+                    )
+                `)
+                .not('firma_tecnico_url', 'is', null)
+                .order('fin', { ascending: false });
+
+            if (!isAnalystOrAdmin && profile?.zona) {
+                rotQuery = rotQuery.eq('roturacion_asignaciones.roturacion_seguimiento.suertes.zona', profile.zona);
             }
 
-            const { data, error } = await query;
+            const [machRes, rotRes] = await Promise.all([machQuery, rotQuery]);
 
-            if (error) throw error;
-            setSignedExecutions(data || []);
+            if (machRes.error) throw machRes.error;
+            if (rotRes.error) throw rotRes.error;
+
+            const formattedMach = (machRes.data || []).map(e => ({ ...e, source: 'ejecuciones' }));
+            const formattedRot = (rotRes.data || []).map(e => {
+                const asig = e.roturacion_asignaciones;
+                const seg = asig?.roturacion_seguimiento;
+                const suerte = seg?.suertes;
+                return {
+                    ...e,
+                    source: 'roturacion_ejecuciones',
+                    programaciones: {
+                        labores: { nombre: asig?.labor === '1RA' ? '1ra Labor (Rot)' : asig?.labor === '2DA' ? '2da Labor (Rot)' : 'Fertilización' },
+                        suertes: { codigo: suerte?.codigo, hacienda: suerte?.hacienda },
+                        tecnico: { nombre: isAnalystOrAdmin ? 'Múltiples' : profile?.nombre }
+                    },
+                    maquinaria: { nombre: asig?.contratistas?.nombre || 'Contratista', tarifa_hora: null }
+                };
+            });
+
+            const combined = [...formattedMach, ...formattedRot].sort((a, b) => new Date(b.fin).getTime() - new Date(a.fin).getTime());
+            setSignedExecutions(combined);
         } catch (error) {
             console.error('Error fetching signed:', error);
             toast.error('Error cargando ejecuciones firmadas');
@@ -89,8 +128,8 @@ export default function TechnicianDashboard() {
         try {
             if (!user) return;
 
-            // Fetch executions for my programaciones that are finished but not signed
-            const { data, error } = await supabase
+            // 1. Ejecuciones Regulares
+            const { data: machData, error: machError } = await supabase
                 .from('ejecuciones')
                 .select(`
                     *,
@@ -107,8 +146,50 @@ export default function TechnicianDashboard() {
                 .not('recibo_url', 'is', null)
                 .order('fin', { ascending: false });
 
-            if (error) throw error;
-            setExecutions(data || []);
+            if (machError) throw machError;
+
+            // 2. Ejecuciones de Roturación
+            let rotQuery = supabase
+                .from('roturacion_ejecuciones')
+                .select(`
+                    *,
+                    roturacion_asignaciones!inner (
+                        labor,
+                        contratistas (nombre),
+                        roturacion_seguimiento!inner (
+                            suertes!inner (codigo, hacienda, zona)
+                        )
+                    )
+                `)
+                .is('firma_tecnico_url', null)
+                .not('recibo_url', 'is', null)
+                .order('fin', { ascending: false });
+
+            if (profile?.zona && profile.rol !== 'admin' && profile.rol !== 'analista') {
+                rotQuery = rotQuery.eq('roturacion_asignaciones.roturacion_seguimiento.suertes.zona', profile.zona);
+            }
+
+            const { data: rotData, error: rotError } = await rotQuery;
+            if (rotError) throw rotError;
+
+            const formattedMach = (machData || []).map(e => ({ ...e, source: 'ejecuciones' }));
+            const formattedRot = (rotData || []).map(e => {
+                const asig = e.roturacion_asignaciones;
+                const seg = asig?.roturacion_seguimiento;
+                const suerte = seg?.suertes;
+                return {
+                    ...e,
+                    source: 'roturacion_ejecuciones',
+                    programaciones: {
+                        labores: { nombre: asig?.labor === '1RA' ? '1ra Labor (Rot)' : asig?.labor === '2DA' ? '2da Labor (Rot)' : 'Fertilización' },
+                        suertes: { codigo: suerte?.codigo, hacienda: suerte?.hacienda }
+                    },
+                    maquinaria: { nombre: asig?.contratistas?.nombre || 'Contratista' }
+                };
+            });
+
+            const combined = [...formattedMach, ...formattedRot].sort((a, b) => new Date(b.fin).getTime() - new Date(a.fin).getTime());
+            setExecutions(combined);
         } catch (error) {
             console.error('Error fetching signatures:', error);
             toast.error('Error cargando ejecuciones para firma');
@@ -176,7 +257,9 @@ export default function TechnicianDashboard() {
                 .from('receipts')
                 .getPublicUrl(fileName);
 
-            const { error: updateError } = await supabase.rpc('sign_execution', {
+            const rpcName = selectedExecution.source === 'roturacion_ejecuciones' ? 'fn_sign_roturacion' : 'sign_execution';
+
+            const { error: updateError } = await supabase.rpc(rpcName, {
                 execution_id: selectedExecution.id,
                 signature_url: publicUrl
             });
@@ -364,7 +447,7 @@ export default function TechnicianDashboard() {
                                             <div className="flex items-center gap-2">
                                                 <Clock size={14} />
                                                 <span>{new Date(exec.fin).toLocaleDateString()}</span>
-                                                <span className="text-white/40">({exec.horas_reales} hrs)</span>
+                                                <span className="text-white/40">({exec.horas_reales ? `${exec.horas_reales} hrs` : `${exec.area_trabajada} Ha`})</span>
                                             </div>
 
                                             <div className="flex gap-2 mt-4">
@@ -422,7 +505,7 @@ export default function TechnicianDashboard() {
                                             <div className="flex items-center gap-2">
                                                 <Clock size={14} />
                                                 <span>{new Date(exec.fin).toLocaleDateString()}</span>
-                                                <span className="text-white/40">({exec.horas_reales} hrs)</span>
+                                                <span className="text-white/40">({exec.horas_reales ? `${exec.horas_reales} hrs` : `${exec.area_trabajada} Ha`})</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-sm text-emerald-400">
                                                 <CheckCircle size={12} />
@@ -438,9 +521,9 @@ export default function TechnicianDashboard() {
                                                 <div className="flex justify-between text-white/70">
                                                     <span>Costo Labor:</span>
                                                     <span className="font-mono text-emerald-400">
-                                                        {exec.maquinaria?.tarifa_hora
-                                                            ? formatCurrency(exec.horas_reales * exec.maquinaria.tarifa_hora)
-                                                            : '$0'}
+                                                        {exec.source === 'roturacion_ejecuciones'
+                                                            ? 'Liquidación por Área'
+                                                            : (exec.maquinaria?.tarifa_hora ? formatCurrency(exec.horas_reales * exec.maquinaria.tarifa_hora) : '$0')}
                                                     </span>
                                                 </div>
                                                 <div className="flex justify-between text-white/70">
@@ -489,7 +572,7 @@ export default function TechnicianDashboard() {
 
                         <div className="p-6 space-y-4">
                             <p className="text-sm text-white/60">
-                                Yo, <span className="text-white font-bold">{profile?.nombre}</span>, certifico que he revisado y apruebo la labor realizada en la suerte <span className="text-white font-bold">{selectedExecution.programaciones.suertes.codigo}</span>.
+                                Yo, <span className="text-white font-bold">{profile?.nombre}</span>, certifico que he revisado y apruebo la labor realizada en la suerte <span className="text-white font-bold">{selectedExecution.programaciones?.suertes?.codigo || selectedExecution.roturacion_asignaciones?.roturacion_seguimiento?.suertes?.codigo}</span>.
                             </p>
 
                             <div className="border-2 border-dashed border-white/20 rounded-xl bg-white/5 relative h-48 touch-none">

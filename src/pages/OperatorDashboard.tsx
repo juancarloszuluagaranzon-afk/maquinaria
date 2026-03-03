@@ -67,6 +67,7 @@ interface RoturacionAsignacion {
         area_programada_fer: number;
         suertes: { codigo: string; hacienda: string; area_neta: number; zona: number };
     };
+    contratista?: { nombre: string };
 }
 
 interface ActiveRotExecution {
@@ -116,6 +117,9 @@ export default function OperatorDashboard() {
 
     // ── Tab state ──
     const [activeTab, setActiveTab] = useState<'labores' | 'roturacion' | 'historial'>('labores');
+    const [hasMaquinaria, setHasMaquinaria] = useState(true);
+    const [hasRoturacion, setHasRoturacion] = useState(true);
+    const [accessLoading, setAccessLoading] = useState(true);
 
     // ── Maquinaria state ──
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -146,16 +150,68 @@ export default function OperatorDashboard() {
 
     // ── Effects ──
     useEffect(() => {
+        if (profile?.rol !== 'operador' && profile?.rol !== 'contratista') {
+            setAccessLoading(false);
+            return;
+        }
+        if (!profile?.empresa) {
+            setAccessLoading(false);
+            return;
+        }
+
+        const checkAccess = async () => {
+            try {
+                const { data: contratista, error: cErr } = await supabase
+                    .from('contratistas')
+                    .select('id')
+                    .eq('nombre', profile.empresa)
+                    .single();
+
+                if (cErr || !contratista) {
+                    setHasMaquinaria(true);
+                    setHasRoturacion(true);
+                    setAccessLoading(false);
+                    return;
+                }
+
+                const [{ count: cMaq }, { count: cRot }] = await Promise.all([
+                    supabase.from('programaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id),
+                    supabase.from('roturacion_asignaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id)
+                ]);
+
+                const hasM = (cMaq || 0) > 0;
+                const hasR = (cRot || 0) > 0;
+
+                setHasMaquinaria(hasM);
+                setHasRoturacion(hasR);
+
+                if (hasM) setActiveTab('labores');
+                else if (hasR) setActiveTab('roturacion');
+                else setActiveTab('historial');
+            } catch (err) {
+                console.error(err);
+                setHasMaquinaria(true);
+                setHasRoturacion(true);
+            } finally {
+                setAccessLoading(false);
+            }
+        };
+
+        checkAccess();
+    }, [profile]);
+
+    useEffect(() => {
         if (!user?.id) return;
         fetchActiveExecutions();
     }, [user?.id]);
 
     useEffect(() => {
+        if (accessLoading) return;
         if (profile?.rol !== 'operador' && profile?.rol !== 'contratista') return;
-        if (activeTab === 'labores') fetchJobs();
+        if (activeTab === 'labores' && hasMaquinaria) fetchJobs();
         else if (activeTab === 'historial') fetchHistory();
-        else if (activeTab === 'roturacion') fetchRoturacion();
-    }, [profile, activeTab]);
+        else if (activeTab === 'roturacion' && hasRoturacion) fetchRoturacion();
+    }, [profile, activeTab, accessLoading, hasMaquinaria, hasRoturacion]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -275,10 +331,11 @@ export default function OperatorDashboard() {
             setHistoryJobs(filtered);
 
             // Fetch Roturación History
-            let rotQuery = supabase
+            const { data: rotData, error: rotErr } = await supabase
                 .from('roturacion_asignaciones')
                 .select(`
                     *,
+                    contratista:contratistas!roturacion_asignaciones_contratista_id_fkey (nombre),
                     roturacion_seguimiento (
                         id,
                         estado_1ra_labor,
@@ -288,26 +345,34 @@ export default function OperatorDashboard() {
                         area_avance_2da,
                         area_avance_fertilizacion,
                         suertes (codigo, hacienda)
+                    ),
+                    roturacion_ejecuciones (
+                         recibo_url, 
+                         firma_tecnico_url, 
+                         area_trabajada, 
+                         hora_inicio:inicio, 
+                         fin
                     )
-                `);
-
-            if (profile?.rol === 'operador' || profile?.rol === 'contratista') {
-                rotQuery = rotQuery.or(`contratista_id.eq.${profile.empresa},operador_id.eq.${user?.id}`);
-            }
-
-            const { data: rotData, error: rotErr } = await rotQuery;
+                `)
+                .order('created_at', { ascending: false });
 
             if (rotErr) throw rotErr;
 
-            const finishedRot = (rotData || []).filter(asig => {
+            const filteredRot = profile?.empresa
+                ? (rotData || []).filter((j: any) => j.contratista?.nombre === profile.empresa)
+                : (rotData || []);
+
+            const finishedRot = filteredRot.filter((asig: any) => {
                 const rs = asig.roturacion_seguimiento;
-                const status = rs?.[estadoField[asig.labor as LaborKey]];
-                return status === 'TERMINADO';
+                if (!rs) return false;
+                const status = rs[estadoField[asig.labor as LaborKey]];
+                return status === 'TERMINADO' || status === 'PARCIAL';
             });
 
             setHistoryRotJobs(finishedRot);
 
         } catch (err: any) {
+            console.error(err);
             toast.error('Error cargando historial');
         } finally {
             setLoading(false);
@@ -428,15 +493,48 @@ export default function OperatorDashboard() {
             const area = parseFloat(reportArea);
             if (isNaN(area) || area < 0) { toast.error('Área inválida'); return; }
 
+            const endTime = new Date();
+            const durationHours = (endTime.getTime() - new Date(activeRotExec.inicio).getTime()) / 3600000;
+
+            const rData = {
+                empresa: asig.contratista?.nombre || profile?.empresa || 'N/A',
+                fecha: endTime.toLocaleDateString('es-CO'),
+                maquina: laborLabel[asig.labor],
+                operador: profile?.nombre || 'N/A',
+                inicio: new Date(activeRotExec.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+                fin: endTime.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+                totalHoras: durationHours.toFixed(2),
+                costoTotal: 'Pendiente', // Roturación is usually settled by area
+                tipo: 'ROTURACIÓN',
+                horometroInicio: activeRotExec.horometro_inicio || 0,
+                horometroFin: parseFloat(horometro),
+            };
+
+            setReceiptData(rData);
+            await new Promise(r => setTimeout(r, 500));
+
+            let publicUrl = null;
+            if (receiptRef.current) {
+                const canvas = await html2canvas(receiptRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, 'image/png'));
+                if (blob) {
+                    const fileName = `receipt_rot_${activeRotExec.id}_${Date.now()}.png`;
+                    const { error: ul } = await supabase.storage.from('receipts').upload(fileName, blob);
+                    if (!ul) { publicUrl = supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl; }
+                    else { toast.error('Error subiendo recibo.'); }
+                }
+            }
+
             // 1. Update execution
             const { error: execErr } = await supabase
                 .from('roturacion_ejecuciones')
                 .update({
-                    fin: new Date().toISOString(),
+                    fin: endTime.toISOString(),
                     horometro_fin: parseFloat(horometro),
                     lat_fin: gpsCoords.lat,
                     lon_fin: gpsCoords.lng,
-                    area_trabajada: area
+                    area_trabajada: area,
+                    recibo_url: publicUrl
                 })
                 .eq('id', activeRotExec.id);
 
@@ -462,7 +560,8 @@ export default function OperatorDashboard() {
 
             setActiveRotExec(null);
             setShowRotEndModal(false);
-            toast.success(newEstado === 'TERMINADO' ? '✅ Labor de roturación TERMINADA' : '🟠 Labor guardada como PARCIAL');
+            setReceiptData(null);
+            toast.success(newEstado === 'TERMINADO' ? '✅ Labor terminada y recibo generado' : '🟠 Labor guardada como PARCIAL y recibo generado');
             fetchRoturacion();
         } catch (err: any) {
             toast.error('Error al finalizar: ' + err.message);
@@ -586,6 +685,7 @@ export default function OperatorDashboard() {
 
     const handleSignOut = async () => { await signOut(); navigate('/login'); };
 
+    if (accessLoading) return <div className="p-8 text-center text-white animate-pulse">Cargando accesos...</div>;
     if (loading && activeTab !== 'roturacion') return <div className="p-8 text-center text-white animate-pulse">Cargando...</div>;
 
     const activeJob = activeExecution?.programacion_id ? jobs.find(j => j.id === activeExecution.programacion_id) : null;
@@ -686,8 +786,8 @@ export default function OperatorDashboard() {
                 {/* Tab Bar */}
                 <div className="flex gap-1 mb-6 bg-black/30 rounded-2xl p-1 border border-white/10">
                     {[
-                        { key: 'labores', label: 'Maquinaria', Icon: Tractor },
-                        { key: 'roturacion', label: 'Roturación', Icon: Leaf },
+                        ...(hasMaquinaria ? [{ key: 'labores', label: 'Maquinaria', Icon: Tractor }] : []),
+                        ...(hasRoturacion ? [{ key: 'roturacion', label: 'Roturación', Icon: Leaf }] : []),
                         { key: 'historial', label: 'Historial', Icon: BarChart2 },
                     ].map(({ key, label, Icon }) => (
                         <button
@@ -860,8 +960,13 @@ export default function OperatorDashboard() {
                     ) : (
                         <div className="space-y-4">
                             {/* Roturación History */}
-                            {historyRotJobs.map((asig) => {
+                            {historyRotJobs.map((asig: any) => {
                                 const rs = asig.roturacion_seguimiento;
+                                // Can be multiple executions, get the latest finished one or just the first
+                                const exec = asig.roturacion_ejecuciones?.[0]; // assuming latest is first or they only have one
+                                const hasFirmado = !!exec?.firma_tecnico_url;
+                                const hasRecibo = !!exec?.recibo_url;
+
                                 return (
                                     <div key={asig.id} className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5">
                                         <div className="absolute right-0 top-0 rounded-bl-xl bg-purple-500/20 text-purple-300 px-3 py-1 text-xs font-bold border-b border-l border-purple-500/30 flex items-center gap-1">
@@ -872,9 +977,34 @@ export default function OperatorDashboard() {
                                             <h3 className="text-xl font-bold text-white">Suerte {rs?.suertes?.codigo}</h3>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3 text-sm mb-4">
-                                            <div><span className="block text-xs text-white/40 uppercase mb-1">Labor</span><span className="text-white">{laborLabel[asig.labor]}</span></div>
+                                            <div><span className="block text-xs text-white/40 uppercase mb-1">Labor</span><span className="text-white">{laborLabel[asig.labor as LaborKey]}</span></div>
                                             <div><span className="block text-xs text-white/40 uppercase mb-1">Área Total</span><span className="text-white">{asig.area_asignada} ha</span></div>
-                                            <div><span className="block text-xs text-white/40 uppercase mb-1">Estado</span><span className="text-emerald-400 font-bold">TERMINADO</span></div>
+                                            {exec?.area_trabajada && (
+                                                <div><span className="block text-xs text-white/40 uppercase mb-1">Área T.</span><span className="text-white">{exec.area_trabajada} ha</span></div>
+                                            )}
+                                            {exec?.fin && (
+                                                <div><span className="block text-xs text-white/40 uppercase mb-1">Fecha</span><span className="text-white">{new Date(exec.fin).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}</span></div>
+                                            )}
+                                            <div><span className="block text-xs text-white/40 uppercase mb-1">Estado</span><span className="text-emerald-400 font-bold">{rs?.[estadoField[asig.labor as LaborKey]] || 'TERMINADO'}</span></div>
+                                        </div>
+
+                                        {/* Recibos Roturación */}
+                                        <div className="flex flex-wrap gap-2 pt-3 border-t border-white/10">
+                                            {hasRecibo && (
+                                                <a href={exec!.recibo_url!} target="_blank" rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:bg-blue-500/40 px-3 py-2 rounded-lg text-sm font-bold transition-all">
+                                                    <FileText size={16} /> Ver Recibo
+                                                </a>
+                                            )}
+                                            {hasFirmado && (
+                                                <a href={exec!.firma_tecnico_url!} target="_blank" rel="noopener noreferrer"
+                                                    className="flex items-center gap-2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/40 px-3 py-2 rounded-lg text-sm font-bold transition-all">
+                                                    <CheckCircle size={16} /> Recibo Firmado
+                                                </a>
+                                            )}
+                                            {!hasRecibo && !hasFirmado && (
+                                                <span className="text-xs text-white/30 italic">Sin recibos disponibles</span>
+                                            )}
                                         </div>
                                     </div>
                                 );

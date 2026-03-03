@@ -75,7 +75,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                     <span className="text-right font-medium">{data.horometroFin}</span>
                 </div>
 
-                {data.tipo === 'LABOR' && (
+                {['LABOR', 'ROTURACIÓN'].includes(data.tipo) && (
                     <div className="mt-4 pt-4 border-t-2 border-gray-200">
                         {data.tarifaHora && (
                             <div className="flex justify-between py-1">
