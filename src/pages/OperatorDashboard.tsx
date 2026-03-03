@@ -405,12 +405,20 @@ export default function OperatorDashboard() {
 
             if (error) throw error;
 
-            // Filter by empresa client-side (RLS handles server-side, but this guarantees UI consistency)
+            // Filter by empresa client-side
             const filtered = profile?.empresa
                 ? (data || []).filter((j: any) => j.contratista?.nombre === profile.empresa)
                 : (data || []);
 
-            setRoturacionJobs(filtered);
+            // ONLY show active (not TERMINADO) in the main Roturación tab
+            const activeRot = filtered.filter((asig: any) => {
+                const rs = asig.roturacion_seguimiento;
+                if (!rs) return true; // Keep if no tracking exists yet
+                const status = rs[estadoField[asig.labor as LaborKey]];
+                return status !== 'TERMINADO';
+            });
+
+            setRoturacionJobs(activeRot);
         } catch (err: any) {
             toast.error('Error cargando asignaciones de roturación');
         } finally {
