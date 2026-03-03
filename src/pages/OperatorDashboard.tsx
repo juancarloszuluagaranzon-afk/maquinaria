@@ -599,14 +599,16 @@ export default function OperatorDashboard() {
         let message = '';
         const mapLink = `https://www.google.com/maps?q=${execData.lat_inicio || execData.lat_fin},${execData.lon_inicio || execData.lon_fin}`;
         if (type === 'START') {
-            message = job
-                ? `🚜 *INICIO DE LABOR*\n\n📍 *Suerte:* ${job.suertes.codigo}\n🚜 *Maquinaria:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`
-                : `⚠️ *INICIO DE ${execData.tipo}*\n\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
+            if (job) {
+                message = `🚜 *INICIO DE ${executionType}*\n\n📍 *Suerte:* ${job.suertes.codigo}\n🚜 *Maquinaria:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
+            } else {
+                message = `⚠️ *INICIO DE ${execData.tipo}*\n\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏰ *Horómetro:* ${execData.horometro_inicio}\n📍 *Ubicación:* ${mapLink}`;
+            }
         } else {
             const dur = ((new Date(execData.fin).getTime() - new Date(execData.inicio).getTime()) / 3600000).toFixed(2);
             message = `🧾 *REPORTE DE FINALIZACIÓN*\n\n`;
             if (job) {
-                message += `🏭 *Empresa:* ${job.contratistas.nombre}\n📅 *Fecha:* ${new Date(execData.fin).toLocaleDateString('es-CO')}\n🚜 *Máquina:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n🏁 *Fin:* ${new Date(execData.fin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏱️ *Total Horas:* ${dur}\n💵 *Costo Total:* ${fmt.format(endData?.costo_real || 0)}`;
+                message += `🏭 *Empresa:* ${job.contratistas.nombre}\n📅 *Fecha:* ${new Date(execData.fin).toLocaleDateString('es-CO')}\n🚜 *Máquina:* ${job.maquinaria.nombre}\n👤 *Operador:* ${profile?.nombre}\n📝 *Tipo:* ${execData.tipo}\n\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n🏁 *Fin:* ${new Date(execData.fin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏱️ *Total Horas:* ${dur}\n💵 *Costo Total:* ${fmt.format(endData?.costo_real || 0)}`;
             } else {
                 message += `⚠️ *${execData.tipo}*\n👤 *Operador:* ${profile?.nombre}\n⏱️ *Duración:* ${dur} hrs`;
             }
@@ -618,9 +620,13 @@ export default function OperatorDashboard() {
     const handleStartExecution = async () => {
         if (!horometro) { toast.error('Ingrese el Horómetro'); return; }
         if (!gpsCoords) { toast.error('Capture la ubicación GPS'); return; }
+        if ((executionType === 'TRASLADO' || executionType === 'EMERGENCIA') && !selectedJobId && jobs.length > 0) {
+            toast.error('Debe seleccionar una suerte para imputar el costo'); return;
+        }
+
         try {
             const job = selectedJobId ? jobs.find(j => j.id === selectedJobId) : undefined;
-            const machineId = executionType === 'LABOR' && job ? job.maquinaria_id : jobs[0]?.maquinaria_id || null;
+            const machineId = job ? job.maquinaria_id : (jobs[0]?.maquinaria_id || null);
             const { data: newExec, error } = await supabase.from('ejecuciones').insert({
                 programacion_id: selectedJobId, operador_id: user?.id, maquinaria_id: machineId,
                 inicio: new Date().toISOString(), horometro_inicio: parseFloat(horometro),
@@ -645,7 +651,7 @@ export default function OperatorDashboard() {
             const endTime = new Date();
             const durationHours = (endTime.getTime() - new Date(activeExecution.inicio).getTime()) / 3600000;
             const job = activeExecution.programacion_id ? jobs.find(j => j.id === activeExecution.programacion_id) : undefined;
-            const realCost = activeExecution.tipo === 'LABOR' && job ? durationHours * job.tarifa_hora : 0;
+            const realCost = job ? durationHours * (job.tarifa_hora || 0) : 0;
 
             const rData = {
                 empresa: job?.contratistas.nombre || 'N/A', fecha: endTime.toLocaleDateString('es-CO'),
@@ -1083,6 +1089,30 @@ export default function OperatorDashboard() {
                             {showStartModal ? `Iniciar ${executionType === 'LABOR' ? 'Labor' : executionType}` : 'Finalizar Actividad'}
                         </h2>
                         <div className="space-y-6">
+                            {(executionType === 'TRASLADO' || executionType === 'EMERGENCIA') && showStartModal && jobs.length > 0 && (
+                                <div>
+                                    <label className="block text-white/60 text-sm font-bold mb-2 ml-1">IMPUTAR COSTO A SUERTE</label>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedJobId || ''}
+                                            onChange={(e) => setSelectedJobId(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-4 pr-10 text-white text-md font-bold focus:outline-none focus:border-purple-500 transition-all appearance-none"
+                                        >
+                                            <option value="" disabled className="text-gray-500">Seleccione la Suerte</option>
+                                            {jobs.map(j => (
+                                                <option key={j.id} value={j.id} className="bg-slate-800">
+                                                    Suerte: {j.suertes?.codigo} - {j.suertes?.hacienda} ({j.labores?.nombre})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                            <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-white/40 mt-2 ml-1">Para {executionType.toLowerCase()}s, el costo se cargará a la suerte elegida.</p>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-white/60 text-sm font-bold mb-2 ml-1">HORÓMETRO {showStartModal ? 'INICIAL' : 'FINAL'}</label>
                                 <div className="relative">
