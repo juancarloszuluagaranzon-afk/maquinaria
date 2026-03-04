@@ -1,0 +1,8 @@
+src/pages/OperatorDashboard.tsx(140,12): error TS2451: Cannot redeclare block-scoped variable 'allSuertes'.
+src/pages/OperatorDashboard.tsx(140,24): error TS2451: Cannot redeclare block-scoped variable 'setAllSuertes'.
+src/pages/OperatorDashboard.tsx(141,12): error TS2451: Cannot redeclare block-scoped variable 'selectedSuerteId'.
+src/pages/OperatorDashboard.tsx(141,30): error TS2451: Cannot redeclare block-scoped variable 'setSelectedSuerteId'.
+src/pages/OperatorDashboard.tsx(454,12): error TS2451: Cannot redeclare block-scoped variable 'allSuertes'.
+src/pages/OperatorDashboard.tsx(454,24): error TS2451: Cannot redeclare block-scoped variable 'setAllSuertes'.
+src/pages/OperatorDashboard.tsx(455,12): error TS2451: Cannot redeclare block-scoped variable 'selectedSuerteId'.
+src/pages/OperatorDashboard.tsx(455,30): error TS2451: Cannot redeclare block-scoped variable 'setSelectedSuerteId'.

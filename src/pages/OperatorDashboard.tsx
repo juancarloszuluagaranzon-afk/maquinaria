@@ -137,6 +137,8 @@ export default function OperatorDashboard() {
     const [gettingGps, setGettingGps] = useState(false);
     const [historyJobs, setHistoryJobs] = useState<Job[]>([]);
     const [historyRotJobs, setHistoryRotJobs] = useState<RoturacionAsignacion[]>([]);
+    const [allSuertes, setAllSuertes] = useState<{ id: string; codigo: string; hacienda: string }[]>([]);
+    const [selectedSuerteId, setSelectedSuerteId] = useState<string>('');
 
     // ── Roturacion state ──
     const [roturacionJobs, setRoturacionJobs] = useState<RoturacionAsignacion[]>([]);
@@ -448,9 +450,6 @@ export default function OperatorDashboard() {
 
     // ── Roturacion Actions ──
 
-    // Non-labor Suerte selection
-    const [allSuertes, setAllSuertes] = useState<any[]>([]);
-    const [selectedSuerteId, setSelectedSuerteId] = useState<string>('');
 
     const openRotStartModal = (asigId: string) => {
         if (activeRotExec || activeExecution) { toast.error('Ya tienes una actividad en curso.'); return; }
