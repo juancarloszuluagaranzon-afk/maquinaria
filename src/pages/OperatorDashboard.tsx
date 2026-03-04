@@ -147,6 +147,7 @@ export default function OperatorDashboard() {
     const [showRotEndModal, setShowRotEndModal] = useState(false);
     const [selectedRotId, setSelectedRotId] = useState<string | null>(null);
     const [reportArea, setReportArea] = useState<string>('');
+    const [forceTerminado, setForceTerminado] = useState(false);
 
     // ── Effects ──
     useEffect(() => {
@@ -506,6 +507,7 @@ export default function OperatorDashboard() {
     const openRotEndModal = () => {
         setHorometro('');
         setReportArea('');
+        setForceTerminado(false);
         setGpsCoords(null);
         setShowRotEndModal(true);
         getGpsLocation();
@@ -576,8 +578,8 @@ export default function OperatorDashboard() {
             const currentAvance = rs[avanceField[asig.labor]] || 0;
             const newTotalAvance = currentAvance + area;
 
-            // Lógica: Solo TERMINADO si llega al área asignada
-            const newEstado = newTotalAvance >= asig.area_asignada ? 'TERMINADO' : 'PARCIAL';
+            // Lógica: TERMINADO si llega al área asignada o si el operador marca la casilla
+            const newEstado = (newTotalAvance >= asig.area_asignada || forceTerminado) ? 'TERMINADO' : 'PARCIAL';
 
             const { error: rsErr } = await supabase
                 .from('roturacion_seguimiento')
@@ -831,7 +833,7 @@ export default function OperatorDashboard() {
 
             {/* Quick Actions */}
             {!activeExecution && !activeRotExec && activeTab === 'labores' && (
-                <div className="grid grid-cols-2 gap-4 px-4 mt-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 mt-4 max-w-2xl mx-auto">
                     <button onClick={() => openStartModal('TRASLADO')} className="flex flex-col items-center justify-center gap-2 bg-blue-600/20 border border-blue-500/30 p-5 rounded-xl text-blue-200 hover:bg-blue-600/30 transition-all active:scale-95">
                         <Truck size={28} /><span className="font-bold text-sm">Registrar Traslado</span>
                     </button>
@@ -891,7 +893,7 @@ export default function OperatorDashboard() {
                                                 <span className="font-bold text-white">{job.suertes?.zona}</span>
                                             </div>
                                         </div>
-                                        <div className="mb-4 grid grid-cols-2 gap-4">
+                                        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div className="space-y-1"><span className="text-xs text-white/40">Labor</span><div className="flex items-center gap-2 text-sm text-white/90"><Tractor className="h-4 w-4 text-green-400" />{job.labores?.nombre}</div></div>
                                             <div className="space-y-1"><span className="text-xs text-white/40">Maquinaria</span><div className="text-sm text-white/90">{job.maquinaria?.nombre}</div></div>
                                             <div className="space-y-1"><span className="text-xs text-white/40">Duración Est.</span><div className="text-sm text-white/90">{job.horas_estimadas} hrs</div></div>
@@ -1037,7 +1039,7 @@ export default function OperatorDashboard() {
                                             <div className="flex items-center gap-2 text-sm text-white/60"><MapPin className="h-4 w-4 text-gray-400" />{rs?.suertes?.hacienda}</div>
                                             <h3 className="text-xl font-bold text-white">Suerte {rs?.suertes?.codigo}</h3>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
                                             <div><span className="block text-xs text-white/40 uppercase mb-1">Labor</span><span className="text-white">{laborLabel[asig.labor as LaborKey]}</span></div>
                                             <div><span className="block text-xs text-white/40 uppercase mb-1">Área Total</span><span className="text-white">{asig.area_asignada} ha</span></div>
                                             {exec?.area_trabajada && (
@@ -1086,7 +1088,7 @@ export default function OperatorDashboard() {
                                             <div className="flex items-center gap-2 text-sm text-white/60"><MapPin className="h-4 w-4 text-gray-400" />{job.suertes?.hacienda}</div>
                                             <h3 className="text-xl font-bold text-white">Suerte {job.suertes?.codigo}</h3>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3 text-sm mb-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm mb-4">
                                             <div><span className="block text-xs text-white/40 uppercase mb-1">Labor</span><span className="text-white">{job.labores?.nombre}</span></div>
                                             <div><span className="block text-xs text-white/40 uppercase mb-1">Máquina</span><span className="text-white">{job.maquinaria?.nombre}</span></div>
                                             {exec?.horas_reales && (
@@ -1226,6 +1228,21 @@ export default function OperatorDashboard() {
                                     </div>
                                     {activeRotJob && <p className="text-xs text-white/30 mt-1 ml-1">Asignado: {activeRotJob.area_asignada} ha</p>}
                                 </div>
+                            )}
+
+                            {showRotEndModal && (
+                                <label className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl cursor-pointer hover:bg-white/10 transition-colors">
+                                    <input
+                                        type="checkbox"
+                                        checked={forceTerminado}
+                                        onChange={(e) => setForceTerminado(e.target.checked)}
+                                        className="w-5 h-5 rounded border-white/20 bg-black/50 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
+                                    />
+                                    <div>
+                                        <p className="text-sm font-bold text-white">Marcar labor como FINALIZADA</p>
+                                        <p className="text-xs text-white/50">Cerrará esta suerte en tu tablero actual independientemente del área restante.</p>
+                                    </div>
+                                </label>
                             )}
 
                             {/* GPS */}
