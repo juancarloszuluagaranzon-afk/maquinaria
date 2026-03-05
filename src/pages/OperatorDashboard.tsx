@@ -140,6 +140,8 @@ export default function OperatorDashboard() {
     const [historyRotJobs, setHistoryRotJobs] = useState<RoturacionAsignacion[]>([]);
     const [allSuertes, setAllSuertes] = useState<{ id: string; codigo: string; hacienda: string }[]>([]);
     const [selectedSuerteId, setSelectedSuerteId] = useState<string>('');
+    const [suerteSearch, setSuerteSearch] = useState<string>('');
+    const [showSuerteDropdown, setShowSuerteDropdown] = useState(false);
 
     // ── Roturacion state ──
     const [roturacionJobs, setRoturacionJobs] = useState<RoturacionAsignacion[]>([]);
@@ -639,6 +641,7 @@ export default function OperatorDashboard() {
     const openStartModal = (type: 'LABOR' | 'TRASLADO' | 'EMERGENCIA', jobId: string | null = null) => {
         if (activeExecution || activeRotExec) { toast.error('Ya hay una actividad en ejecución.'); return; }
         setExecutionType(type); setSelectedJobId(jobId); setHorometro(''); setGpsCoords(null);
+        setSuerteSearch(''); setSelectedSuerteId(''); setShowSuerteDropdown(false);
         setShowStartModal(true); getGpsLocation();
     };
 
@@ -1166,23 +1169,57 @@ export default function OperatorDashboard() {
                                 <div>
                                     <label className="block text-white/60 text-sm font-bold mb-2 ml-1">IMPUTAR COSTO A SUERTE</label>
                                     <div className="relative">
-                                        <select
-                                            value={selectedSuerteId}
-                                            onChange={(e) => setSelectedSuerteId(e.target.value)}
-                                            className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-4 pr-10 text-white text-md font-bold focus:outline-none focus:border-purple-500 transition-all appearance-none"
-                                        >
-                                            <option value="" disabled className="text-gray-500">Seleccionar de BD...</option>
-                                            {allSuertes.map(s => (
-                                                <option key={s.id} value={s.id} className="bg-slate-800">
-                                                    {s.hacienda} - Suerte {s.codigo}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                                            <svg className="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                                        </div>
+                                        <input
+                                            type="text"
+                                            value={suerteSearch}
+                                            onChange={(e) => {
+                                                setSuerteSearch(e.target.value);
+                                                setSelectedSuerteId('');
+                                                setShowSuerteDropdown(true);
+                                            }}
+                                            onFocus={() => setShowSuerteDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowSuerteDropdown(false), 200)}
+                                            placeholder="Buscar suerte o hacienda..."
+                                            className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-4 pr-4 text-white text-md font-bold focus:outline-none focus:border-purple-500 transition-all placeholder:text-white/30"
+                                        />
+                                        {/* Dropdown filtrado */}
+                                        {showSuerteDropdown && suerteSearch.length > 0 && (
+                                            <div className="absolute z-50 left-0 right-0 mt-1 max-h-52 overflow-y-auto rounded-xl bg-slate-800 border border-white/20 shadow-2xl">
+                                                {allSuertes
+                                                    .filter(s =>
+                                                        s.codigo.toLowerCase().includes(suerteSearch.toLowerCase()) ||
+                                                        s.hacienda.toLowerCase().includes(suerteSearch.toLowerCase())
+                                                    )
+                                                    .slice(0, 30)
+                                                    .map(s => (
+                                                        <button
+                                                            key={s.id}
+                                                            type="button"
+                                                            onMouseDown={() => {
+                                                                setSelectedSuerteId(s.id);
+                                                                setSuerteSearch(`${s.hacienda} - Suerte ${s.codigo}`);
+                                                                setShowSuerteDropdown(false);
+                                                            }}
+                                                            className="w-full text-left px-4 py-3 hover:bg-purple-500/20 transition-colors border-b border-white/5 last:border-0"
+                                                        >
+                                                            <span className="font-bold text-white">{s.codigo}</span>
+                                                            <span className="text-white/50 text-sm ml-2">{s.hacienda}</span>
+                                                        </button>
+                                                    ))
+                                                }
+                                                {allSuertes.filter(s =>
+                                                    s.codigo.toLowerCase().includes(suerteSearch.toLowerCase()) ||
+                                                    s.hacienda.toLowerCase().includes(suerteSearch.toLowerCase())
+                                                ).length === 0 && (
+                                                        <div className="px-4 py-3 text-white/40 text-sm text-center">Sin resultados</div>
+                                                    )}
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-white/40 mt-2 ml-1">El costo de la máquina principal será cargado a esta Suerte en la base general.</p>
+                                    {selectedSuerteId && (
+                                        <p className="text-xs text-emerald-400 mt-2 ml-1">✓ Suerte seleccionada correctamente</p>
+                                    )}
+                                    <p className="text-xs text-white/40 mt-1 ml-1">El costo de la máquina principal será cargado a esta Suerte en la base general.</p>
                                 </div>
                             )}
 
