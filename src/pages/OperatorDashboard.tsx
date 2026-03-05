@@ -287,7 +287,6 @@ export default function OperatorDashboard() {
             const { data, error } = await supabase
                 .from('suertes')
                 .select('id, codigo, hacienda')
-                .eq('estado', 'ACTIVO')
                 .order('hacienda', { ascending: true })
                 .order('codigo', { ascending: true });
 
