@@ -28,6 +28,7 @@ interface Job {
     labores: { nombre: string };
     maquinaria: { nombre: string; tarifa_hora: number };
     contratistas: { nombre: string };
+    operador_id?: string;
     prioridades?: { nivel: number; asunto: string };
     tecnico?: { nombre: string };
     ejecuciones?: { recibo_url: string | null; firma_tecnico_url: string | null; horas_reales: number | null; costo_real: number | null; fin: string | null }[];
@@ -314,9 +315,21 @@ export default function OperatorDashboard() {
 
             if (error) throw error;
 
-            // Filter by empresa client-side (RLS handles server-side)
             const filtered = profile?.empresa
-                ? (data || []).filter((j: any) => j.contratistas?.nombre === profile.empresa)
+                ? (data || []).filter((j: any) => {
+                    const isCompanyMatch = j.contratistas?.nombre === profile.empresa;
+                    const nameLower = (profile.empresa || '').toLowerCase();
+                    const isSpecialContractor = nameLower.includes('serviexcavaciones') || nameLower.includes('serviretro');
+
+                    if (!isCompanyMatch) return false;
+
+                    // If it's a special contractor AND the user is an operator, show ONLY their explicitly assigned jobs
+                    if (isSpecialContractor && profile.rol === 'operador') {
+                        return j.operador_id === user?.id;
+                    }
+
+                    return true;
+                })
                 : (data || []);
 
             setJobs(filtered);
@@ -347,7 +360,19 @@ export default function OperatorDashboard() {
             if (error) throw error;
 
             const filtered = profile?.empresa
-                ? (data || []).filter((j: any) => j.contratistas?.nombre === profile.empresa)
+                ? (data || []).filter((j: any) => {
+                    const isCompanyMatch = j.contratistas?.nombre === profile.empresa;
+                    const nameLower = (profile.empresa || '').toLowerCase();
+                    const isSpecialContractor = nameLower.includes('serviexcavaciones') || nameLower.includes('serviretro');
+
+                    if (!isCompanyMatch) return false;
+
+                    if (isSpecialContractor && profile.rol === 'operador') {
+                        return j.operador_id === user?.id;
+                    }
+
+                    return true;
+                })
                 : (data || []);
 
             setHistoryJobs(filtered);

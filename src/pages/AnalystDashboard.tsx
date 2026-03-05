@@ -19,6 +19,12 @@ interface Machinery {
     tarifa_hora?: number;
 }
 
+interface Operator {
+    id: string;
+    nombre: string;
+    empresa: string;
+}
+
 interface ProgramacionRequest {
     id: string;
     estado: string;
@@ -38,11 +44,12 @@ export default function AnalystDashboard() {
     const [requests, setRequests] = useState<ProgramacionRequest[]>([]);
     const [contractors, setContractors] = useState<Contractor[]>([]);
     const [machinery, setMachinery] = useState<Machinery[]>([]);
+    const [operators, setOperators] = useState<Operator[]>([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
     // State for assignments (keyed by request ID)
-    const [assignments, setAssignments] = useState<{ [key: string]: { contractorId: string; machineryId: string } }>({});
+    const [assignments, setAssignments] = useState<{ [key: string]: { contractorId: string; machineryId: string; operatorId?: string } }>({});
 
     useEffect(() => {
         fetchData();
@@ -51,7 +58,7 @@ export default function AnalystDashboard() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [reqRes, contRes, maqRes] = await Promise.all([
+            const [reqRes, contRes, maqRes, opRes] = await Promise.all([
                 supabase
                     .from('programaciones')
                     .select(`
@@ -65,24 +72,28 @@ export default function AnalystDashboard() {
                     .or('estado.eq.APROBADO_ZONA,estado.eq.ASIGNADO') // Show approved and already assigned
                     .order('created_at', { ascending: false }),
                 supabase.from('contratistas').select('*'),
-                supabase.from('maquinaria').select('*')
+                supabase.from('maquinaria').select('*'),
+                supabase.from('usuarios').select('id, nombre, empresa').eq('rol', 'operador')
             ]);
 
             if (reqRes.error) throw reqRes.error;
             if (contRes.error) throw contRes.error;
             if (maqRes.error) throw maqRes.error;
+            if (opRes.error) throw opRes.error;
 
             setRequests(reqRes.data || []);
             setContractors(contRes.data || []);
             setMachinery(maqRes.data || []);
+            setOperators(opRes.data || []);
 
             // Initialize assignments state
             const initialAssignments: any = {};
             reqRes.data?.forEach((r: any) => {
-                if (r.contratista_id || r.maquinaria_id) {
+                if (r.contratista_id || r.maquinaria_id || r.operador_id) {
                     initialAssignments[r.id] = {
                         contractorId: r.contratista_id || '',
-                        machineryId: r.maquinaria_id || ''
+                        machineryId: r.maquinaria_id || '',
+                        operatorId: r.operador_id || ''
                     };
                 }
             });
@@ -96,14 +107,21 @@ export default function AnalystDashboard() {
         }
     };
 
-    const handleAssignmentChange = (reqId: string, field: 'contractorId' | 'machineryId', value: string) => {
-        setAssignments(prev => ({
-            ...prev,
-            [reqId]: {
-                ...prev[reqId],
-                [field]: value
+    const handleAssignmentChange = (reqId: string, field: 'contractorId' | 'machineryId' | 'operatorId', value: string) => {
+        setAssignments(prev => {
+            const current = prev[reqId] || { contractorId: '', machineryId: '', operatorId: '' };
+            const newState = { ...current, [field]: value };
+
+            // Si cambian el contratista, resetear la maquinaria y el operador
+            if (field === 'contractorId') {
+                newState.machineryId = '';
+                newState.operatorId = '';
             }
-        }));
+            return {
+                ...prev,
+                [reqId]: newState
+            };
+        });
     };
 
     const saveAssignment = async (req: ProgramacionRequest) => {
@@ -113,18 +131,32 @@ export default function AnalystDashboard() {
             return;
         }
 
+        const selectedContractor = contractors.find(c => c.id === assignment.contractorId);
+        const nameLower = selectedContractor?.nombre?.toLowerCase() || '';
+        const isSpecialContractor = nameLower.includes('serviexcavaciones') || nameLower.includes('serviretro');
+
+        if (isSpecialContractor && !assignment.operatorId) {
+            setToast({ message: 'Debe seleccionar un operador para este contratista', type: 'error' });
+            return;
+        }
+
         try {
-            const { error } = await supabase
+            const { data, error } = await supabase
                 .from('programaciones')
                 .update({
                     contratista_id: assignment.contractorId,
                     maquinaria_id: assignment.machineryId,
+                    operador_id: assignment.operatorId || null,
                     estado: 'ASIGNADO', // Update status
                     updated_at: new Date().toISOString()
                 })
-                .eq('id', req.id);
+                .eq('id', req.id)
+                .select();
 
             if (error) throw error;
+            if (!data || data.length === 0) {
+                throw new Error('No se pudo guardar la asignación. Posible problema de permisos (RLS).');
+            }
 
             setToast({ message: 'Asignación guardada', type: 'success' });
 
@@ -151,9 +183,9 @@ export default function AnalystDashboard() {
             // Refresh list
             fetchData();
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving assignment:', error);
-            setToast({ message: 'Error al guardar', type: 'error' });
+            setToast({ message: `Error al guardar: ${error.message || 'Desconocido'}`, type: 'error' });
         }
     };
 
@@ -194,6 +226,14 @@ export default function AnalystDashboard() {
                         const relevantMachinery = assign.contractorId
                             ? machinery.filter(m => m.contratista_id === assign.contractorId)
                             : machinery;
+
+                        const selectedContractor = contractors.find(c => c.id === assign.contractorId);
+                        const nameLower = selectedContractor?.nombre?.toLowerCase() || '';
+                        const isSpecialContractor = nameLower.includes('serviexcavaciones') || nameLower.includes('serviretro');
+
+                        const compName = nameLower.includes('serviexcavaciones') ? 'Serviexcavaciones' :
+                            (nameLower.includes('serviretro') ? 'Serviretro' : '');
+                        const relevantOperators = operators.filter(o => o.empresa === compName);
 
                         return (
                             <GlassCard key={req.id} className="p-6">
@@ -266,7 +306,9 @@ export default function AnalystDashboard() {
                                         <GlassSelect
                                             label="Contratista"
                                             placeholder="Seleccione..."
-                                            options={contractors.map(c => ({ value: c.id, label: c.nombre }))}
+                                            options={contractors
+                                                .filter(c => machinery.some(m => m.contratista_id === c.id))
+                                                .map(c => ({ value: c.id, label: c.nombre }))}
                                             value={assign.contractorId || ''}
                                             onChange={(e) => handleAssignmentChange(req.id, 'contractorId', e.target.value)}
                                             className="text-sm"
@@ -282,9 +324,20 @@ export default function AnalystDashboard() {
                                             className="text-sm"
                                         />
 
+                                        {isSpecialContractor && (
+                                            <GlassSelect
+                                                label="Operador"
+                                                placeholder="Seleccione operador..."
+                                                options={relevantOperators.map(o => ({ value: o.id, label: o.nombre }))}
+                                                value={assign.operatorId || ''}
+                                                onChange={(e) => handleAssignmentChange(req.id, 'operatorId', e.target.value)}
+                                                className="text-sm border-emerald-500/30"
+                                            />
+                                        )}
+
                                         <button
                                             onClick={() => saveAssignment(req)}
-                                            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95"
+                                            className="w-full flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold transition-all shadow-lg shadow-emerald-900/20 active:scale-95 mt-4"
                                         >
                                             <MessageCircle size={18} />
                                             <span>Guardar y Notificar</span>

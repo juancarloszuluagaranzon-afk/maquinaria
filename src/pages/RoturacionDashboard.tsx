@@ -150,263 +150,271 @@ export default function RoturacionDashboard() {
 
 
     return (
-        <div className="p-6 md:p-10 space-y-8 min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                        <Calculator className="text-emerald-400" />
-                        Seguimiento de Roturación
-                    </h1>
-                    <p className="text-white/50 mt-1 text-sm md:text-base">Gestión de labores en primeros 3 meses (Soca/Plantilla)</p>
-                </div>
+        <div className="relative min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white font-sans selection:bg-blue-500/30 pb-20">
+            {/* Ambient Light Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-purple-500/20 blur-3xl"></div>
+                <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"></div>
+            </div>
 
-                <div className="flex flex-wrap gap-4 w-full md:w-auto">
-                    <button
-                        onClick={() => setShowProgramming(true)}
-                        className="flex-1 md:flex-none px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-blue-500/20"
-                    >
-                        <Calendar size={18} />
-                        Programar
-                    </button>
+            <div className="relative z-10 p-6 md:p-10 space-y-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                    <div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                            <Calculator className="text-emerald-400" />
+                            Seguimiento de Roturación
+                        </h1>
+                        <p className="text-white/50 mt-1 text-sm md:text-base">Gestión de labores en primeros 3 meses (Soca/Plantilla)</p>
+                    </div>
 
-                    {profile?.rol === 'analista' && (
+                    <div className="flex flex-wrap gap-4 w-full md:w-auto">
                         <button
-                            onClick={() => setShowImporter(true)}
-                            className="flex-1 md:flex-none px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-emerald-500/20"
+                            onClick={() => setShowProgramming(true)}
+                            className="flex-1 md:flex-none px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-blue-500/20"
                         >
-                            <Upload size={18} />
-                            Importar
+                            <Calendar size={18} />
+                            Programar
                         </button>
-                    )}
-                    <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
-                        <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Área Visible</div>
-                        <div className="text-lg font-mono text-emerald-400">{totalArea.toFixed(2)}</div>
-                    </div>
-                    <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
-                        <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Pendientes</div>
-                        <div className="text-lg font-mono text-yellow-400">{pendingCount}</div>
-                    </div>
-                </div>
-            </div>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {/* Card 1: Área Total */}
-                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1">Área Total</h3>
-                    <div className="text-3xl font-bold text-white font-mono">
-                        {stats.total.toFixed(2)} <span className="text-lg text-white/50">ha</span>
-                    </div>
-                    <div className="mt-2 text-xs text-white/40">
-                        Total de suertes filtradas
-                    </div>
-                </div>
-
-                {/* Card 2: Área Terminada por Labor */}
-                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Terminado por Labor</h3>
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">1a Roturacion</span>
-                            <span className="font-mono text-emerald-400">{stats.finished.labor1.toFixed(1)} ha</span>
+                        {profile?.rol === 'analista' && (
+                            <button
+                                onClick={() => setShowImporter(true)}
+                                className="flex-1 md:flex-none px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center gap-2 transition-colors font-medium shadow-lg shadow-emerald-500/20"
+                            >
+                                <Upload size={18} />
+                                Importar
+                            </button>
+                        )}
+                        <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
+                            <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Área Visible</div>
+                            <div className="text-lg font-mono text-emerald-400">{totalArea.toFixed(2)}</div>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">2a Roturacion</span>
-                            <span className="font-mono text-emerald-400">{stats.finished.labor2.toFixed(1)} ha</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">Fertilizacion</span>
-                            <span className="font-mono text-emerald-400">{stats.finished.laborFer.toFixed(1)} ha</span>
+                        <div className="flex-1 md:flex-none px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-center md:text-right">
+                            <div className="text-[10px] text-white/50 uppercase font-bold whitespace-nowrap">Pendientes</div>
+                            <div className="text-lg font-mono text-yellow-400">{pendingCount}</div>
                         </div>
                     </div>
                 </div>
 
-                {/* Card 3: Área Pendiente (Total - Terminada) */}
-                <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Pendiente por Labor</h3>
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">1a Roturacion</span>
-                            <span className="font-mono text-yellow-400">{stats.pending.labor1.toFixed(1)} ha</span>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {/* Card 1: Área Total */}
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-1">Área Total</h3>
+                        <div className="text-3xl font-bold text-white font-mono">
+                            {stats.total.toFixed(2)} <span className="text-lg text-white/50">ha</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">2a Roturacion</span>
-                            <span className="font-mono text-yellow-400">{stats.pending.labor2.toFixed(1)} ha</span>
+                        <div className="mt-2 text-xs text-white/40">
+                            Total de suertes filtradas
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-white/70">Fertilizacion</span>
-                            <span className="font-mono text-yellow-400">{stats.pending.laborFer.toFixed(1)} ha</span>
+                    </div>
+
+                    {/* Card 2: Área Terminada por Labor */}
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Terminado por Labor</h3>
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">1a Roturacion</span>
+                                <span className="font-mono text-emerald-400">{stats.finished.labor1.toFixed(1)} ha</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">2a Roturacion</span>
+                                <span className="font-mono text-emerald-400">{stats.finished.labor2.toFixed(1)} ha</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">Fertilizacion</span>
+                                <span className="font-mono text-emerald-400">{stats.finished.laborFer.toFixed(1)} ha</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Card 3: Área Pendiente (Total - Terminada) */}
+                    <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-6 rounded-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <h3 className="text-white/50 text-sm font-bold uppercase tracking-wider mb-2">Pendiente por Labor</h3>
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">1a Roturacion</span>
+                                <span className="font-mono text-yellow-400">{stats.pending.labor1.toFixed(1)} ha</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">2a Roturacion</span>
+                                <span className="font-mono text-yellow-400">{stats.pending.labor2.toFixed(1)} ha</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-white/70">Fertilizacion</span>
+                                <span className="font-mono text-yellow-400">{stats.pending.laborFer.toFixed(1)} ha</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Actions Bar */}
-            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-black/40 backdrop-blur-xl p-4 rounded-2xl border border-white/10 mb-6">
+                {/* Actions Bar */}
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center bg-black/40 backdrop-blur-xl p-4 rounded-2xl border border-white/10 mb-6">
 
-                {/* View Tabs */}
-                <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
-                    <button
-                        onClick={() => setViewMode('PENDING')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'PENDING'
-                            ? 'bg-emerald-500 text-white shadow-lg'
-                            : 'text-white/50 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        Pendientes
-                    </button>
-                    <button
-                        onClick={() => setViewMode('FINISHED')}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'FINISHED'
-                            ? 'bg-blue-500 text-white shadow-lg'
-                            : 'text-white/50 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        Terminadas
-                    </button>
-                </div>
-
-                <div className="flex flex-wrap gap-4 items-center">
-                    <div className="flex items-center gap-2 bg-black/20 px-3 py-2 rounded-lg border border-white/5 w-full md:w-64">
-                        <Search size={18} className="text-white/30" />
-                        <input
-                            type="text"
-                            placeholder="Buscar suerte..."
-                            className="bg-transparent border-none focus:outline-none text-white w-full"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
+                    {/* View Tabs */}
+                    <div className="flex bg-black/40 p-1 rounded-xl border border-white/10">
+                        <button
+                            onClick={() => setViewMode('PENDING')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'PENDING'
+                                ? 'bg-emerald-500 text-white shadow-lg'
+                                : 'text-white/50 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            Pendientes
+                        </button>
+                        <button
+                            onClick={() => setViewMode('FINISHED')}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'FINISHED'
+                                ? 'bg-blue-500 text-white shadow-lg'
+                                : 'text-white/50 hover:text-white hover:bg-white/5'
+                                }`}
+                        >
+                            Terminadas
+                        </button>
                     </div>
 
-                    {canSeeAllZones && (
+                    <div className="flex flex-wrap gap-4 items-center">
+                        <div className="flex items-center gap-2 bg-black/20 px-3 py-2 rounded-lg border border-white/5 w-full md:w-64">
+                            <Search size={18} className="text-white/30" />
+                            <input
+                                type="text"
+                                placeholder="Buscar suerte..."
+                                className="bg-transparent border-none focus:outline-none text-white w-full"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        {canSeeAllZones && (
+                            <div className="flex items-center gap-2">
+                                <Filter size={18} className="text-white/30" />
+                                <select
+                                    value={selectedZone}
+                                    onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                                    className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                                >
+                                    <option value="ALL">Todas las Zonas</option>
+                                    <option value={1}>Zona 1</option>
+                                    <option value={2}>Zona 2</option>
+                                    <option value={3}>Zona 3</option>
+                                </select>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-2">
                             <Filter size={18} className="text-white/30" />
                             <select
-                                value={selectedZone}
-                                onChange={e => setSelectedZone(e.target.value === 'ALL' ? 'ALL' : Number(e.target.value))}
+                                value={laborFilter}
+                                onChange={e => setLaborFilter(e.target.value as any)}
                                 className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
                             >
-                                <option value="ALL">Todas las Zonas</option>
-                                <option value={1}>Zona 1</option>
-                                <option value={2}>Zona 2</option>
-                                <option value={3}>Zona 3</option>
+                                <option value="ALL">Todas las Labores</option>
+                                <option value="1RA">1a Roturación</option>
+                                <option value="2DA">2a Roturación</option>
+                                <option value="FER">Fertilización</option>
                             </select>
                         </div>
-                    )}
 
-                    <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-white/30" />
-                        <select
-                            value={laborFilter}
-                            onChange={e => setLaborFilter(e.target.value as any)}
-                            className="bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white outline-none focus:border-emerald-500/50"
+                        <button
+                            onClick={fetchData}
+                            className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors"
                         >
-                            <option value="ALL">Todas las Labores</option>
-                            <option value="1RA">1a Roturación</option>
-                            <option value="2DA">2a Roturación</option>
-                            <option value="FER">Fertilización</option>
-                        </select>
+                            <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                        </button>
                     </div>
-
-                    <button
-                        onClick={fetchData}
-                        className="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors"
-                    >
-                        <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
-                    </button>
                 </div>
-            </div>
 
-            {/* Table */}
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-xl">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-white/5 border-b border-white/10 text-xs font-bold text-white/50 uppercase tracking-wider">
-                                <th className="p-4 text-center">{canSeeAllZones ? 'Zona' : ''}</th>
-                                <th className="p-4">Suerte</th>
-                                <th className="p-4 text-right">Área Total</th>
-                                <th className="p-4 hidden md:table-cell">Fecha Inicio</th>
-                                <th className="p-4 text-center">Días</th>
-                                <th className="p-4 hidden md:table-cell">Tipo Rot.</th>
-                                <th className="p-4 text-center w-32">1a Labor</th>
-                                <th className="p-4 text-center w-32">2a Labor</th>
-                                <th className="p-4 text-center w-32">Fertilización</th>
-                                <th className="p-4 hidden lg:table-cell text-right">Tipo Caña</th>
-                                {canAssign && <th className="p-4 text-center">Asignar</th>}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={10} className="p-8 text-center text-white/30 animate-pulse">
-                                        Cargando datos...
-                                    </td>
+                {/* Table */}
+                <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-white/5 border-b border-white/10 text-xs font-bold text-white/50 uppercase tracking-wider">
+                                    <th className="p-4 text-center">{canSeeAllZones ? 'Zona' : ''}</th>
+                                    <th className="p-4">Suerte</th>
+                                    <th className="p-4 text-right">Área Total</th>
+                                    <th className="p-4 hidden md:table-cell">Fecha Inicio</th>
+                                    <th className="p-4 text-center">Días</th>
+                                    <th className="p-4 hidden md:table-cell">Tipo Rot.</th>
+                                    <th className="p-4 text-center w-32">1a Labor</th>
+                                    <th className="p-4 text-center w-32">2a Labor</th>
+                                    <th className="p-4 text-center w-32">Fertilización</th>
+                                    <th className="p-4 hidden lg:table-cell text-right">Tipo Caña</th>
+                                    {canAssign && <th className="p-4 text-center">Asignar</th>}
                                 </tr>
-                            ) : filteredData.length === 0 ? (
-                                <tr>
-                                    <td colSpan={10} className="p-8 text-center text-white/30">
-                                        No se encontraron registros en esta sección.
-                                    </td>
-                                </tr>
-                            ) : (
-                                filteredData.map(row => (
-                                    <RoturacionRow
-                                        key={row.id}
-                                        row={row}
-                                        onEdit={setEditingItem}
-                                        onAssign={setAssignmentItem}
-                                        canAssign={canAssign}
-                                        showZone={canSeeAllZones}
-                                    />
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={10} className="p-8 text-center text-white/30 animate-pulse">
+                                            Cargando datos...
+                                        </td>
+                                    </tr>
+                                ) : filteredData.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="p-8 text-center text-white/30">
+                                            No se encontraron registros en esta sección.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredData.map(row => (
+                                        <RoturacionRow
+                                            key={row.id}
+                                            row={row}
+                                            onEdit={setEditingItem}
+                                            onAssign={setAssignmentItem}
+                                            canAssign={canAssign}
+                                            showZone={canSeeAllZones}
+                                        />
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            {/* Modal */}
-            <EditStatusModal
-                isOpen={!!editingItem}
-                onClose={() => setEditingItem(null)}
-                data={editingItem}
-                onSave={handleSave}
-            />
+                {/* Modal */}
+                <EditStatusModal
+                    isOpen={!!editingItem}
+                    onClose={() => setEditingItem(null)}
+                    data={editingItem}
+                    onSave={handleSave}
+                />
 
-            {/* Importer Modal */}
-            {showImporter && (
-                <RoturacionImporter
-                    onClose={() => setShowImporter(false)}
-                    onImportSuccess={() => {
+                {/* Importer Modal */}
+                {showImporter && (
+                    <RoturacionImporter
+                        onClose={() => setShowImporter(false)}
+                        onImportSuccess={() => {
+                            fetchData();
+                            setShowImporter(false);
+                        }}
+                    />
+                )}
+
+                <ProgrammingModal
+                    isOpen={showProgramming}
+                    onClose={() => setShowProgramming(false)}
+                    onSuccess={() => {
                         fetchData();
-                        setShowImporter(false);
+                        setShowProgramming(false);
                     }}
                 />
-            )}
 
-            <ProgrammingModal
-                isOpen={showProgramming}
-                onClose={() => setShowProgramming(false)}
-                onSuccess={() => {
-                    fetchData();
-                    setShowProgramming(false);
-                }}
-            />
-
-            <AssignmentModal
-                isOpen={!!assignmentItem}
-                onClose={() => setAssignmentItem(null)}
-                data={assignmentItem}
-                onSuccess={() => {
-                    fetchData();
-                    setAssignmentItem(null);
-                }}
-            />
+                <AssignmentModal
+                    isOpen={!!assignmentItem}
+                    onClose={() => setAssignmentItem(null)}
+                    data={assignmentItem}
+                    onSuccess={() => {
+                        fetchData();
+                        setAssignmentItem(null);
+                    }}
+                />
+            </div>
         </div>
     );
 }

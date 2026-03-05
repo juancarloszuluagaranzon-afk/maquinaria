@@ -39,12 +39,18 @@ export default function Login() {
     };
 
     return (
-        <div className="flex h-screen items-center justify-center bg-[#020c1a] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-900/30 via-[#020c1a] to-[#01060f] p-4 text-white">
+        <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white font-sans selection:bg-blue-500/30 p-4">
+            {/* Ambient Light Blobs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-purple-500/20 blur-3xl"></div>
+                <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl"></div>
+            </div>
+
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="w-full max-w-md"
+                className="w-full max-w-md relative z-10"
             >
                 <GlassCard className={`border-t-4 ${error ? 'border-t-red-500/50 shadow-red-900/20' : 'border-t-cyan-500/50'}`}>
                     <div className="mb-8 text-center">
