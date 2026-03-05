@@ -31,13 +31,13 @@ export function ReloadPrompt() {
         if (needRefresh) {
             toast(
                 (t) => (
-                    <div className="flex flex-col gap-2 min-w-[200px]">
-                        <span className="font-semibold text-sm text-gray-800 dark:text-white">
+                    <div className="flex flex-col gap-3 min-w-[200px]">
+                        <span className="font-semibold text-sm text-slate-100">
                             Nueva versión disponible
                         </span>
                         <div className="flex gap-2">
                             <button
-                                className="px-3 py-1.5 bg-rp-green-600 hover:bg-rp-green-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
                                 onClick={() => {
                                     updateServiceWorker(true)
                                     // Fallback to reload manually if it doesn't automatically trigger via SW controllerchange
@@ -48,7 +48,7 @@ export function ReloadPrompt() {
                                 Actualizar
                             </button>
                             <button
-                                className="px-3 py-1.5 border border-gray-200 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors"
+                                className="px-3 py-1.5 border border-slate-600 hover:bg-slate-800 rounded-lg text-xs font-medium text-slate-300 transition-colors"
                                 onClick={() => {
                                     setNeedRefresh(false)
                                     toast.dismiss(t.id)
@@ -64,11 +64,13 @@ export function ReloadPrompt() {
                     duration: Infinity,
                     position: 'bottom-right',
                     style: {
-                        background: '#ffffff',
-                        border: '2px solid #000000',
+                        background: '#1e293b', // slate-800
+                        color: '#f8fafc',
+                        border: '1px solid rgba(255,255,255,0.1)',
                         borderRadius: '1rem',
                         padding: '1rem',
                         zIndex: 9999,
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
                     }
                 }
             )
