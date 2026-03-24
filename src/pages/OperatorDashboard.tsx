@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     LogOut, ClipboardList, Play, MapPin, Clock, Tractor, Square,
     AlertTriangle, Truck, FileText, CheckCircle,
-    Leaf, BarChart2
+    Leaf, BarChart2, Sprout
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import html2canvas from 'html2canvas';
@@ -117,9 +117,10 @@ export default function OperatorDashboard() {
     const navigate = useNavigate();
 
     // ── Tab state ──
-    const [activeTab, setActiveTab] = useState<'labores' | 'roturacion' | 'historial'>('labores');
+    const [activeTab, setActiveTab] = useState<'labores' | 'roturacion' | 'fertilizacion' | 'historial'>('labores');
     const [hasMaquinaria, setHasMaquinaria] = useState(true);
     const [hasRoturacion, setHasRoturacion] = useState(true);
+    const [hasFertilizacion, setHasFertilizacion] = useState(true);
     const [accessLoading, setAccessLoading] = useState(true);
 
     // ── Maquinaria state ──
@@ -178,28 +179,34 @@ export default function OperatorDashboard() {
                 if (cErr || !contratista) {
                     setHasMaquinaria(true);
                     setHasRoturacion(true);
+                    setHasFertilizacion(true);
                     setAccessLoading(false);
                     return;
                 }
 
-                const [{ count: cMaq }, { count: cRot }] = await Promise.all([
+                const [{ count: cMaq }, { count: cRot }, { count: cFer }] = await Promise.all([
                     supabase.from('programaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id),
-                    supabase.from('roturacion_asignaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id)
+                    supabase.from('roturacion_asignaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id).in('labor', ['1RA', '2DA']),
+                    supabase.from('roturacion_asignaciones').select('id', { count: 'exact', head: true }).eq('contratista_id', contratista.id).eq('labor', 'FER')
                 ]);
 
                 const hasM = (cMaq || 0) > 0;
                 const hasR = (cRot || 0) > 0;
+                const hasF = (cFer || 0) > 0;
 
                 setHasMaquinaria(hasM);
                 setHasRoturacion(hasR);
+                setHasFertilizacion(hasF);
 
                 if (hasM) setActiveTab('labores');
                 else if (hasR) setActiveTab('roturacion');
+                else if (hasF) setActiveTab('fertilizacion');
                 else setActiveTab('historial');
             } catch (err) {
                 console.error(err);
                 setHasMaquinaria(true);
                 setHasRoturacion(true);
+                setHasFertilizacion(true);
             } finally {
                 setAccessLoading(false);
             }
@@ -218,11 +225,11 @@ export default function OperatorDashboard() {
         if (profile?.rol !== 'operador' && profile?.rol !== 'contratista') return;
         if (activeTab === 'labores' && hasMaquinaria) fetchJobs();
         else if (activeTab === 'historial') fetchHistory();
-        else if (activeTab === 'roturacion' && hasRoturacion) fetchRoturacion();
+        else if ((activeTab === 'roturacion' && hasRoturacion) || (activeTab === 'fertilizacion' && hasFertilizacion)) fetchRoturacion();
 
         // Always fetch suertes for emergency/traslado mapping if operator/contractor
         fetchAllSuertes();
-    }, [profile, activeTab, accessLoading, hasMaquinaria, hasRoturacion]);
+    }, [profile, activeTab, accessLoading, hasMaquinaria, hasRoturacion, hasFertilizacion]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
@@ -877,19 +884,26 @@ export default function OperatorDashboard() {
                 );
             })}
 
-            {/* Active Roturacion Banners */}
+            {/* Active Roturacion y Fertilizacion Banners */}
             {activeRotExecs.map(exec => {
                 const activeRotJob = roturacionJobs.find(a => a.id === exec.asignacion_id);
+                const isFer = activeRotJob?.labor === 'FER';
+                const bgClass = isFer ? 'bg-amber-500/10 border-amber-500/20' : 'bg-purple-500/10 border-purple-500/20';
+                const iconBgClass = isFer ? 'bg-amber-500' : 'bg-purple-500';
+                const textClass = isFer ? 'text-amber-400' : 'text-purple-400';
+                const badgeClass = isFer ? 'bg-amber-500/20 text-amber-400' : 'bg-purple-500/20 text-purple-400';
+                const IconComp = isFer ? Sprout : Leaf;
+
                 return (
-                    <div key={exec.id} className="sticky top-[73px] z-10 bg-purple-500/10 px-4 py-4 backdrop-blur-md border-b border-purple-500/20">
+                    <div key={exec.id} className={`sticky top-[73px] z-10 px-4 py-4 backdrop-blur-md border-b ${bgClass}`}>
                         <div className="flex items-center justify-between max-w-2xl mx-auto">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-purple-500 rounded-xl animate-bounce"><Leaf size={20} className="text-white" /></div>
+                                <div className={`p-2 rounded-xl animate-bounce ${iconBgClass}`}><IconComp size={20} className="text-white" /></div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono font-bold text-xl text-purple-400">{rotTimers[exec.id] || '00:00:00'}</span>
-                                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
-                                            Roturación activa
+                                        <span className={`font-mono font-bold text-xl ${textClass}`}>{rotTimers[exec.id] || '00:00:00'}</span>
+                                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}>
+                                            {isFer ? 'Fertilización activa' : 'Roturación activa'}
                                         </span>
                                     </div>
                                     {activeRotJob && <p className="text-xs text-white/50">Suerte {activeRotJob.roturacion_seguimiento.suertes.codigo} · {laborLabel[activeRotJob.labor]}</p>}
@@ -919,20 +933,24 @@ export default function OperatorDashboard() {
             <main className="px-4 py-6 relative z-10 max-w-2xl mx-auto">
 
                 {/* Tab Bar */}
-                <div className="flex gap-1 mb-6 bg-black/30 rounded-2xl p-1 border border-white/10">
+                <div className="flex gap-1 mb-6 bg-black/30 rounded-2xl p-1 border border-white/10 overflow-x-auto no-scrollbar">
                     {[
                         ...(hasMaquinaria ? [{ key: 'labores', label: 'Maquinaria', Icon: Tractor }] : []),
                         ...(hasRoturacion ? [{ key: 'roturacion', label: 'Roturación', Icon: Leaf }] : []),
+                        ...(hasFertilizacion ? [{ key: 'fertilizacion', label: 'Fertilización', Icon: Sprout }] : []),
                         { key: 'historial', label: 'Historial', Icon: BarChart2 },
-                    ].map(({ key, label, Icon }) => (
-                        <button
-                            key={key}
-                            onClick={() => setActiveTab(key as any)}
-                            className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === key ? 'bg-purple-500 text-white shadow-lg' : 'text-white/40 hover:text-white/60'}`}
-                        >
-                            <Icon size={18} />{label}
-                        </button>
-                    ))}
+                    ].map(({ key, label, Icon }) => {
+                        const bgActive = key === 'fertilizacion' ? 'bg-amber-500' : 'bg-purple-500';
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key as any)}
+                                className={`flex-1 flex flex-col items-center gap-1 py-2 px-2 rounded-xl text-xs font-bold transition-all min-w-[72px] ${activeTab === key ? `${bgActive} text-white shadow-lg` : 'text-white/40 hover:text-white/60'}`}
+                            >
+                                <Icon size={18} /><span>{label}</span>
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {/* ══════════════════════════════════════════ */}
@@ -992,20 +1010,22 @@ export default function OperatorDashboard() {
                 )}
 
                 {/* ══════════════════════════════════════════ */}
-                {/* TAB: ROTURACIÓN                           */}
+                {/* TAB: ROTURACIÓN / FERTILIZACIÓN           */}
                 {/* ══════════════════════════════════════════ */}
-                {activeTab === 'roturacion' && (
+                {(activeTab === 'roturacion' || activeTab === 'fertilizacion') && (
                     loadingRot ? (
                         <div className="flex justify-center py-8"><div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-purple-500" /></div>
-                    ) : roturacionJobs.length === 0 ? (
+                    ) : roturacionJobs.filter(j => activeTab === 'fertilizacion' ? j.labor === 'FER' : (j.labor === '1RA' || j.labor === '2DA')).length === 0 ? (
                         <div className="mt-10 text-center">
-                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"><Leaf className="h-8 w-8 text-white/30" /></div>
-                            <h3 className="text-lg font-medium text-white">Sin asignaciones de roturación</h3>
+                            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5">
+                                {activeTab === 'fertilizacion' ? <Sprout className="h-8 w-8 text-white/30" /> : <Leaf className="h-8 w-8 text-white/30" />}
+                            </div>
+                            <h3 className="text-lg font-medium text-white">Sin asignaciones de {activeTab === 'fertilizacion' ? 'fertilización' : 'roturación'}</h3>
                             <p className="mt-2 text-sm text-white/50">Aún no tienes labores asignadas en este módulo</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {roturacionJobs.map((asig) => {
+                            {roturacionJobs.filter(j => activeTab === 'fertilizacion' ? j.labor === 'FER' : (j.labor === '1RA' || j.labor === '2DA')).map((asig) => {
                                 const rs = asig.roturacion_seguimiento;
                                 const s = rs?.suertes;
                                 const currentEstado = rs?.[estadoField[asig.labor]] || 'PENDIENTE';
@@ -1013,9 +1033,14 @@ export default function OperatorDashboard() {
                                 const pct = asig.area_asignada > 0 ? Math.min(100, (currentAvance / asig.area_asignada) * 100) : 0;
                                 const isTerminado = currentEstado === 'TERMINADO';
                                 const isActive = activeRotExecs.some(e => e.asignacion_id === asig.id);
+                                const isFer = asig.labor === 'FER';
+                                
+                                const activeBorderBg = isFer ? 'border-amber-500/50 bg-amber-500/10' : 'border-purple-500/50 bg-purple-500/10';
+                                const laborBadge = isFer ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+                                const progressBar = isTerminado ? 'bg-emerald-500' : (isFer ? 'bg-amber-500' : 'bg-purple-500');
 
                                 return (
-                                    <div key={asig.id} className={`rounded-xl border p-5 transition-all ${isActive ? 'border-purple-500/50 bg-purple-500/10' : isTerminado ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/5'}`}>
+                                    <div key={asig.id} className={`rounded-xl border p-5 transition-all ${isActive ? activeBorderBg : isTerminado ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/5'}`}>
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -1029,7 +1054,7 @@ export default function OperatorDashboard() {
 
                                         {/* Labor badge */}
                                         <div className="flex items-center gap-2 mb-3">
-                                            <span className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-bold px-3 py-1 rounded-full">
+                                            <span className={`text-xs font-bold px-3 py-1 rounded-full border ${laborBadge}`}>
                                                 {laborLabel[asig.labor]}
                                             </span>
                                         </div>
@@ -1042,7 +1067,7 @@ export default function OperatorDashboard() {
                                             </div>
                                             <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                                                 <div
-                                                    className={`h-full rounded-full transition-all ${isTerminado ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                                                    className={`h-full rounded-full transition-all ${progressBar}`}
                                                     style={{ width: `${pct}%` }}
                                                 />
                                             </div>
@@ -1053,7 +1078,7 @@ export default function OperatorDashboard() {
                                         {!isTerminado && !isActive && (
                                             <button
                                                 onClick={() => openRotStartModal(asig.id)}
-                                                className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
+                                                className={`w-full flex items-center justify-center gap-2 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50 ${isFer ? 'bg-gradient-to-r from-green-600 to-green-500' : 'bg-gradient-to-r from-green-600 to-green-500'}`}
                                             >
                                                 <Play size={18} fill="white" /> INICIAR
                                             </button>
@@ -1101,8 +1126,8 @@ export default function OperatorDashboard() {
 
                                 return (
                                     <div key={asig.id} className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-5">
-                                        <div className="absolute right-0 top-0 rounded-bl-xl bg-purple-500/20 text-purple-300 px-3 py-1 text-xs font-bold border-b border-l border-purple-500/30 flex items-center gap-1">
-                                            <CheckCircle size={12} /> ROTURACIÓN
+                                        <div className={`absolute right-0 top-0 rounded-bl-xl px-3 py-1 text-xs font-bold border-b border-l flex items-center gap-1 ${asig.labor === 'FER' ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-purple-500/20 text-purple-300 border-purple-500/30'}`}>
+                                            <CheckCircle size={12} /> {asig.labor === 'FER' ? 'FERTILIZACIÓN' : 'ROTURACIÓN'}
                                         </div>
                                         <div className="mb-3">
                                             <div className="flex items-center gap-2 text-sm text-white/60"><MapPin className="h-4 w-4 text-gray-400" />{rs?.suertes?.hacienda}</div>
