@@ -825,7 +825,7 @@ export default function OperatorDashboard() {
     const handleSignOut = async () => { await signOut(); navigate('/login'); };
 
     if (accessLoading) return <div className="p-8 text-center text-white animate-pulse">Cargando accesos...</div>;
-    if (loading && activeTab !== 'roturacion') return <div className="p-8 text-center text-white animate-pulse">Cargando...</div>;
+    if (loading && activeTab !== 'roturacion' && activeTab !== 'fertilizacion') return <div className="p-8 text-center text-white animate-pulse">Cargando...</div>;
 
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER
