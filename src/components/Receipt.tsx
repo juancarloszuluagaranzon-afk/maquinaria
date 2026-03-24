@@ -20,6 +20,7 @@ interface ReceiptProps {
         suerte?: string;
         hacienda?: string;
         tecnico?: string;
+        signatureUrl?: string;
     };
 }
 
@@ -123,11 +124,21 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                             </div>
                         )}
 
-                        <div className="mt-6 border-t border-gray-300 pt-2">
+                        <div className="mt-6 border-t border-gray-300 pt-2 relative">
                             <p className="text-xs text-gray-500 mb-1">Aprobado por:</p>
-                            <p className="font-medium text-lg text-gray-800 border-b border-gray-300 pb-1">
-                                {data.aprobadoPor || '_______________________'}
-                            </p>
+                            <div className="relative border-b border-gray-300 pb-1 h-12 flex items-end">
+                                <p className="font-medium text-lg text-gray-800 absolute bottom-1 left-0 z-0">
+                                    {data.aprobadoPor || '_______________________'}
+                                </p>
+                                {data.signatureUrl && (
+                                    <img 
+                                        src={data.signatureUrl} 
+                                        alt="Firma" 
+                                        crossOrigin="anonymous" 
+                                        className="absolute bottom-0 left-0 h-16 object-contain z-10" 
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}

@@ -257,6 +257,55 @@ export default function TechnicianDashboard() {
                 .from('receipts')
                 .getPublicUrl(fileName);
 
+            try {
+                // Compositing image
+                const [receiptImg, sigImg] = await Promise.all([
+                    fetch(selectedExecution.recibo_url).then(res => res.blob()).then(blob => {
+                        return new Promise<HTMLImageElement>((res, rej) => {
+                            const img = new Image();
+                            const url = URL.createObjectURL(blob);
+                            img.onload = () => { res(img); URL.revokeObjectURL(url); };
+                            img.onerror = rej;
+                            img.src = url;
+                        });
+                    }),
+                    fetch(publicUrl).then(res => res.blob()).then(blob => {
+                        return new Promise<HTMLImageElement>((res, rej) => {
+                            const img = new Image();
+                            const url = URL.createObjectURL(blob);
+                            img.onload = () => { res(img); URL.revokeObjectURL(url); };
+                            img.onerror = rej;
+                            img.src = url;
+                        });
+                    })
+                ]);
+
+                const compositeCanvas = document.createElement('canvas');
+                compositeCanvas.width = receiptImg.width;
+                compositeCanvas.height = receiptImg.height;
+                const ctx = compositeCanvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(receiptImg, 0, 0);
+                    // Draw signature near bottom left, over "Aprobado por: _______"
+                    // Typically 'p-6' padding is 24px, and it's around 100px from the bottom
+                    ctx.drawImage(sigImg, 24, compositeCanvas.height - 160, 200, 100);
+
+                    const compositeBlob = await new Promise<Blob | null>(res => compositeCanvas.toBlob(res, 'image/png'));
+                    if (compositeBlob) {
+                        const compFileName = `receipt_signed_${selectedExecution.id}_${Date.now()}.png`;
+                        const { error: compErr } = await supabase.storage.from('receipts').upload(compFileName, compositeBlob);
+                        if (!compErr) {
+                            const signedReceiptUrl = supabase.storage.from('receipts').getPublicUrl(compFileName).data.publicUrl;
+                            const table = selectedExecution.source === 'roturacion_ejecuciones' ? 'roturacion_ejecuciones' : 'ejecuciones';
+                            await supabase.from(table).update({ recibo_url: signedReceiptUrl }).eq('id', selectedExecution.id);
+                        }
+                    }
+                }
+            } catch (compositeError) {
+                console.warn('Could not composite signature on receipt:', compositeError);
+                // Non-fatal, we still save the signature
+            }
+
             const rpcName = selectedExecution.source === 'roturacion_ejecuciones' ? 'fn_sign_roturacion' : 'sign_execution';
 
             const { error: updateError } = await supabase.rpc(rpcName, {
