@@ -16,6 +16,10 @@ interface ReceiptProps {
         horometroInicio: number;
         horometroFin: number;
         aprobadoPor?: string;
+        area?: string;
+        suerte?: string;
+        hacienda?: string;
+        tecnico?: string;
     };
 }
 
@@ -48,6 +52,31 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(({ data },
                     <span className="font-semibold text-gray-600">Operador:</span>
                     <span className="text-right font-medium">{data.operador}</span>
                 </div>
+
+                {data.hacienda && (
+                    <div className="flex justify-between border-b border-gray-100 py-1 bg-green-50 px-2 rounded mt-1">
+                        <span className="font-semibold text-gray-600">Hacienda:</span>
+                        <span className="text-right font-bold text-gray-800">{data.hacienda}</span>
+                    </div>
+                )}
+                {data.suerte && (
+                    <div className="flex justify-between border-b border-gray-100 py-1 bg-green-50 px-2 rounded">
+                        <span className="font-semibold text-gray-600">Suerte:</span>
+                        <span className="text-right font-bold text-gray-800">{data.suerte}</span>
+                    </div>
+                )}
+                {data.area && (
+                    <div className="flex justify-between border-b border-gray-100 py-1 bg-green-50 px-2 rounded">
+                        <span className="font-semibold text-gray-600">Área Trabajada:</span>
+                        <span className="text-right font-bold text-gray-800">{data.area} Ha</span>
+                    </div>
+                )}
+                {data.tecnico && (
+                    <div className="flex justify-between border-b border-gray-100 py-1 bg-blue-50 px-2 rounded mb-1">
+                        <span className="font-semibold text-gray-600">Técnico Zonal:</span>
+                        <span className="text-right font-bold text-blue-800">{data.tecnico}</span>
+                    </div>
+                )}
 
                 <div className="py-2"></div>
 

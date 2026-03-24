@@ -125,8 +125,9 @@ export default function OperatorDashboard() {
     // ── Maquinaria state ──
     const [jobs, setJobs] = useState<Job[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeExecution, setActiveExecution] = useState<ActiveExecution | null>(null);
-    const [timer, setTimer] = useState<string>('00:00:00');
+    const [activeExecutions, setActiveExecutions] = useState<ActiveExecution[]>([]);
+    const [timers, setTimers] = useState<Record<string, string>>({});
+    const [closingExecId, setClosingExecId] = useState<string | null>(null);
     const [showStartModal, setShowStartModal] = useState(false);
     const [showEndModal, setShowEndModal] = useState(false);
     const receiptRef = useRef<HTMLDivElement>(null);
@@ -146,8 +147,9 @@ export default function OperatorDashboard() {
     // ── Roturacion state ──
     const [roturacionJobs, setRoturacionJobs] = useState<RoturacionAsignacion[]>([]);
     const [loadingRot, setLoadingRot] = useState(false);
-    const [activeRotExec, setActiveRotExec] = useState<ActiveRotExecution | null>(null);
-    const [rotTimer, setRotTimer] = useState<string>('00:00:00');
+    const [activeRotExecs, setActiveRotExecs] = useState<ActiveRotExecution[]>([]);
+    const [rotTimers, setRotTimers] = useState<Record<string, string>>({});
+    const [closingRotExecId, setClosingRotExecId] = useState<string | null>(null);
     const [showRotStartModal, setShowRotStartModal] = useState(false);
     const [showRotEndModal, setShowRotEndModal] = useState(false);
     const [selectedRotId, setSelectedRotId] = useState<string | null>(null);
@@ -224,31 +226,45 @@ export default function OperatorDashboard() {
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (activeExecution?.inicio) {
+        if (activeExecutions.length > 0) {
             interval = setInterval(() => {
-                const diff = Date.now() - new Date(activeExecution.inicio).getTime();
-                const h = Math.floor(diff / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
-                setTimer(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+                const now = Date.now();
+                const newTimers: Record<string, string> = {};
+                activeExecutions.forEach(exec => {
+                    if (exec.inicio) {
+                        const diff = now - new Date(exec.inicio).getTime();
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        newTimers[exec.id] = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    }
+                });
+                setTimers(newTimers);
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [activeExecution]);
+    }, [activeExecutions]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
-        if (activeRotExec?.inicio) {
+        if (activeRotExecs.length > 0) {
             interval = setInterval(() => {
-                const diff = Date.now() - new Date(activeRotExec.inicio).getTime();
-                const h = Math.floor(diff / 3600000);
-                const m = Math.floor((diff % 3600000) / 60000);
-                const s = Math.floor((diff % 60000) / 1000);
-                setRotTimer(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+                const now = Date.now();
+                const newTimers: Record<string, string> = {};
+                activeRotExecs.forEach(exec => {
+                    if (exec.inicio) {
+                        const diff = now - new Date(exec.inicio).getTime();
+                        const h = Math.floor(diff / 3600000);
+                        const m = Math.floor((diff % 3600000) / 60000);
+                        const s = Math.floor((diff % 60000) / 1000);
+                        newTimers[exec.id] = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    }
+                });
+                setRotTimers(newTimers);
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [activeRotExec]);
+    }, [activeRotExecs]);
 
     // ── Fetch functions ──
 
@@ -261,9 +277,7 @@ export default function OperatorDashboard() {
                 .select(`*, suertes (codigo, hacienda)`)
                 .eq('operador_id', user.id)
                 .is('fin', null)
-                .order('inicio', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .order('inicio', { ascending: false });
 
             // Check roturacion
             const { data: rotExec } = await supabase
@@ -271,12 +285,10 @@ export default function OperatorDashboard() {
                 .select('*')
                 .eq('operador_id', user.id)
                 .is('fin', null)
-                .order('inicio', { ascending: false })
-                .limit(1)
-                .maybeSingle();
+                .order('inicio', { ascending: false });
 
-            setActiveExecution(machineryExec);
-            setActiveRotExec(rotExec);
+            setActiveExecutions(machineryExec || []);
+            setActiveRotExecs(rotExec || []);
         } catch (err) {
             console.error('Error fetching active executions:', err);
         }
@@ -476,18 +488,31 @@ export default function OperatorDashboard() {
 
     // ── Roturacion Actions ──
 
+    const sendRotWhatsApp = (type: 'START' | 'END', asig: any, execData: any, receiptUrl?: string) => {
+        let message = '';
+        const mapLink = `https://www.google.com/maps?q=${execData.lat_inicio || execData.lat_fin},${execData.lon_inicio || execData.lon_fin}`;
+        const s = asig.roturacion_seguimiento?.suertes;
+        
+        if (type === 'START') {
+            message = `🌱 *INICIO DE ROTURACIÓN*\n\n📍 *Lugar:* ${s?.hacienda} - Suerte ${s?.codigo}\n🚜 *Labor:* ${laborLabel[asig.labor as LaborKey]}\n👤 *Operador:* ${profile?.nombre}\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n📍 *Ubicación:* ${mapLink}`;
+        } else {
+            const dur = ((new Date(execData.fin).getTime() - new Date(execData.inicio).getTime()) / 3600000).toFixed(2);
+            message = `🧾 *REPORTE DE FINALIZACIÓN ROTURACIÓN*\n\n🏭 *Empresa:* ${asig.contratista?.nombre || profile?.empresa}\n📅 *Fecha:* ${new Date(execData.fin).toLocaleDateString('es-CO')}\n🚜 *Labor:* ${laborLabel[asig.labor as LaborKey]}\n👤 *Operador:* ${profile?.nombre}\n\n🕓 *Inicio:* ${new Date(execData.inicio).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n🏁 *Fin:* ${new Date(execData.fin).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}\n⏱️ *Total Horas:* ${dur}\n📏 *Área Trabajada:* ${execData.area_trabajada} ha`;
+            
+            if (receiptUrl) message += `\n📄 *Ver Recibo:* ${receiptUrl}`;
+        }
+        window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+    };
+
 
     const openRotStartModal = (asigId: string) => {
-        if (activeRotExec || activeExecution) { toast.error('Ya tienes una actividad en curso.'); return; }
         setSelectedRotId(asigId);
-        setHorometro('');
         setGpsCoords(null);
         setShowRotStartModal(true);
         getGpsLocation();
     };
 
     const handleStartRotExecution = async () => {
-        if (!horometro) { toast.error('Ingrese el Horómetro'); return; }
         if (!gpsCoords) { toast.error('Capture la ubicación GPS'); return; }
         if (!selectedRotId) return;
 
@@ -502,7 +527,7 @@ export default function OperatorDashboard() {
                     asignacion_id: selectedRotId,
                     operador_id: user?.id,
                     inicio: new Date().toISOString(),
-                    horometro_inicio: parseFloat(horometro),
+                    horometro_inicio: 0,
                     lat_inicio: gpsCoords.lat,
                     lon_inicio: gpsCoords.lng
                 })
@@ -520,17 +545,18 @@ export default function OperatorDashboard() {
 
             if (rsErr) throw rsErr;
 
-            setActiveRotExec(newExec);
             setShowRotStartModal(false);
             toast.success('Labor de roturación iniciada');
             fetchRoturacion();
+            fetchActiveExecutions();
+            sendRotWhatsApp('START', asig, newExec);
         } catch (err: any) {
             toast.error('Error al iniciar: ' + err.message);
         }
     };
 
-    const openRotEndModal = () => {
-        setHorometro('');
+    const openRotEndModal = (execId: string) => {
+        setClosingRotExecId(execId);
         setReportArea('');
         setForceTerminado(false);
         setGpsCoords(null);
@@ -539,14 +565,19 @@ export default function OperatorDashboard() {
     };
 
     const handleStopRotExecution = async () => {
-        if (!horometro) { toast.error('Ingrese el Horómetro'); return; }
         if (!reportArea) { toast.error('Ingrese el Área trabajada'); return; }
         if (!gpsCoords) { toast.error('Capture la ubicación GPS'); return; }
+        if (!closingRotExecId) return;
+
+        const activeRotExec = activeRotExecs.find(e => e.id === closingRotExecId);
         if (!activeRotExec) return;
 
         try {
             const asig = roturacionJobs.find(a => a.id === activeRotExec.asignacion_id);
             if (!asig) throw new Error('Asignación no encontrada');
+
+            const rs = asig.roturacion_seguimiento;
+            const s = rs?.suertes;
 
             const area = parseFloat(reportArea);
             if (isNaN(area) || area < 0) { toast.error('Área inválida'); return; }
@@ -564,8 +595,12 @@ export default function OperatorDashboard() {
                 totalHoras: durationHours.toFixed(2),
                 costoTotal: 'Pendiente', // Roturación is usually settled by area
                 tipo: 'ROTURACIÓN',
-                horometroInicio: activeRotExec.horometro_inicio || 0,
-                horometroFin: parseFloat(horometro),
+                horometroInicio: 0,
+                horometroFin: 0,
+                area: area.toFixed(2),
+                suerte: s?.codigo || 'N/A',
+                hacienda: s?.hacienda || 'N/A',
+                tecnico: s?.zona ? `Técnico Zona ${s.zona}` : 'N/A'
             };
 
             setReceiptData(rData);
@@ -583,23 +618,24 @@ export default function OperatorDashboard() {
                 }
             }
 
+            const updatePayload = {
+                fin: endTime.toISOString(),
+                horometro_fin: 0,
+                lat_fin: gpsCoords.lat,
+                lon_fin: gpsCoords.lng,
+                area_trabajada: area,
+                recibo_url: publicUrl
+            };
+
             // 1. Update execution
             const { error: execErr } = await supabase
                 .from('roturacion_ejecuciones')
-                .update({
-                    fin: endTime.toISOString(),
-                    horometro_fin: parseFloat(horometro),
-                    lat_fin: gpsCoords.lat,
-                    lon_fin: gpsCoords.lng,
-                    area_trabajada: area,
-                    recibo_url: publicUrl
-                })
+                .update(updatePayload)
                 .eq('id', activeRotExec.id);
 
             if (execErr) throw execErr;
 
             // 2. Update global state in roturacion_seguimiento
-            const rs = asig.roturacion_seguimiento;
             const currentAvance = rs[avanceField[asig.labor]] || 0;
             const newTotalAvance = currentAvance + area;
 
@@ -616,11 +652,14 @@ export default function OperatorDashboard() {
 
             if (rsErr) throw rsErr;
 
-            setActiveRotExec(null);
+            setClosingRotExecId(null);
             setShowRotEndModal(false);
             setReceiptData(null);
             toast.success(newEstado === 'TERMINADO' ? '✅ Labor terminada y recibo generado' : '🟠 Labor guardada como PARCIAL y recibo generado');
             fetchRoturacion();
+            fetchActiveExecutions();
+            
+            sendRotWhatsApp('END', asig, { ...activeRotExec, ...updatePayload }, publicUrl || undefined);
         } catch (err: any) {
             toast.error('Error al finalizar: ' + err.message);
         }
@@ -638,13 +677,12 @@ export default function OperatorDashboard() {
 
     // ── Execution helpers ──
     const openStartModal = (type: 'LABOR' | 'TRASLADO' | 'EMERGENCIA', jobId: string | null = null) => {
-        if (activeExecution || activeRotExec) { toast.error('Ya hay una actividad en ejecución.'); return; }
         setExecutionType(type); setSelectedJobId(jobId); setHorometro(''); setGpsCoords(null);
         setSuerteSearch(''); setSelectedSuerteId(''); setShowSuerteDropdown(false);
         setShowStartModal(true); getGpsLocation();
     };
 
-    const openEndModal = () => { setHorometro(''); setGpsCoords(null); setShowEndModal(true); getGpsLocation(); };
+    const openEndModal = (execId: string) => { setClosingExecId(execId); setHorometro(''); setGpsCoords(null); setShowEndModal(true); getGpsLocation(); };
 
     const sendWhatsApp = (type: 'START' | 'END', job: Job | undefined, execData: any, endData?: any, receiptUrl?: string) => {
         let message = '';
@@ -703,8 +741,9 @@ export default function OperatorDashboard() {
                 await supabase.from('programaciones').update({ estado: 'EN_EJECUCION' }).eq('id', selectedJobId);
             }
 
-            setActiveExecution(newExec); setShowStartModal(false);
+            setShowStartModal(false);
             toast.success(`${executionType} iniciado`);
+            fetchActiveExecutions();
             if (executionType === 'LABOR') fetchJobs();
             sendWhatsApp('START', job, newExec);
         } catch (err: any) { toast.error('Error al iniciar: ' + err.message); }
@@ -713,6 +752,9 @@ export default function OperatorDashboard() {
     const handleStopExecution = async () => {
         if (!horometro) { toast.error('Ingrese el Horómetro'); return; }
         if (!gpsCoords) { toast.error('Capture la ubicación GPS'); return; }
+        if (!closingExecId) return;
+
+        const activeExecution = activeExecutions.find(e => e.id === closingExecId);
         if (!activeExecution) return;
         try {
             const endTime = new Date();
@@ -766,9 +808,10 @@ export default function OperatorDashboard() {
                 await supabase.from('programaciones').update({ estado: 'FINALIZADO' }).eq('id', activeExecution.programacion_id);
             }
             sendWhatsApp('END', job, { ...activeExecution, ...updatePayload }, updatePayload, publicUrl || undefined);
-            setActiveExecution(null); setShowEndModal(false); setReceiptData(null);
+            setClosingExecId(null); setShowEndModal(false); setReceiptData(null);
             toast.success('Actividad finalizada');
             fetchJobs();
+            fetchActiveExecutions();
         } catch (err: any) { toast.error('Error al finalizar: ' + err.message); }
     };
 
@@ -776,9 +819,6 @@ export default function OperatorDashboard() {
 
     if (accessLoading) return <div className="p-8 text-center text-white animate-pulse">Cargando accesos...</div>;
     if (loading && activeTab !== 'roturacion') return <div className="p-8 text-center text-white animate-pulse">Cargando...</div>;
-
-    const activeJob = activeExecution?.programacion_id ? jobs.find(j => j.id === activeExecution.programacion_id) : null;
-    const activeRotJob = activeRotExec ? roturacionJobs.find(a => a.id === activeRotExec.asignacion_id) : null;
 
     // ─────────────────────────────────────────────────────────────────────────
     // RENDER
@@ -811,54 +851,60 @@ export default function OperatorDashboard() {
                 </div>
             </header>
 
-            {/* Active Execution Banner (Maquinaria) */}
-            {activeExecution && (
-                <div className="sticky top-[73px] z-10 bg-amber-500/10 px-4 py-4 backdrop-blur-md border-b border-amber-500/20">
-                    <div className="flex items-center justify-between max-w-2xl mx-auto">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-emerald-500 rounded-xl animate-bounce"><Play size={20} fill="white" className="text-white" /></div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-xl text-amber-400">{timer}</span>
-                                    <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${activeExecution.tipo === 'EMERGENCIA' ? 'bg-red-500/20 text-red-400' : activeExecution.tipo === 'TRASLADO' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
-                                        {activeExecution.tipo}
-                                    </span>
+            {/* Active Executions Banners (Maquinaria) */}
+            {activeExecutions.map(exec => {
+                const activeJob = exec.programacion_id ? jobs.find(j => j.id === exec.programacion_id) : null;
+                return (
+                    <div key={exec.id} className="sticky top-[73px] z-10 bg-amber-500/10 px-4 py-4 backdrop-blur-md border-b border-amber-500/20">
+                        <div className="flex items-center justify-between max-w-2xl mx-auto">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500 rounded-xl animate-bounce"><Play size={20} fill="white" className="text-white" /></div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-xl text-amber-400">{timers[exec.id] || '00:00:00'}</span>
+                                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${exec.tipo === 'EMERGENCIA' ? 'bg-red-500/20 text-red-400' : exec.tipo === 'TRASLADO' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                            {exec.tipo}
+                                        </span>
+                                    </div>
+                                    {activeJob && <p className="text-xs text-white/50">Suerte {activeJob.suertes.codigo} · {activeJob.labores.nombre}</p>}
                                 </div>
-                                {activeJob && <p className="text-xs text-white/50">Suerte {activeJob.suertes.codigo} · {activeJob.labores.nombre}</p>}
                             </div>
+                            <button onClick={() => openEndModal(exec.id)} className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                                <Square size={18} fill="white" /> FINALIZAR
+                            </button>
                         </div>
-                        <button onClick={openEndModal} className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
-                            <Square size={18} fill="white" /> FINALIZAR
-                        </button>
                     </div>
-                </div>
-            )}
+                );
+            })}
 
-            {/* Active Roturacion Banner */}
-            {activeRotExec && (
-                <div className="sticky top-[73px] z-10 bg-purple-500/10 px-4 py-4 backdrop-blur-md border-b border-purple-500/20">
-                    <div className="flex items-center justify-between max-w-2xl mx-auto">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-500 rounded-xl animate-bounce"><Leaf size={20} className="text-white" /></div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono font-bold text-xl text-purple-400">{rotTimer}</span>
-                                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
-                                        Roturación activa
-                                    </span>
+            {/* Active Roturacion Banners */}
+            {activeRotExecs.map(exec => {
+                const activeRotJob = roturacionJobs.find(a => a.id === exec.asignacion_id);
+                return (
+                    <div key={exec.id} className="sticky top-[73px] z-10 bg-purple-500/10 px-4 py-4 backdrop-blur-md border-b border-purple-500/20">
+                        <div className="flex items-center justify-between max-w-2xl mx-auto">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-purple-500 rounded-xl animate-bounce"><Leaf size={20} className="text-white" /></div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono font-bold text-xl text-purple-400">{rotTimers[exec.id] || '00:00:00'}</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
+                                            Roturación activa
+                                        </span>
+                                    </div>
+                                    {activeRotJob && <p className="text-xs text-white/50">Suerte {activeRotJob.roturacion_seguimiento.suertes.codigo} · {laborLabel[activeRotJob.labor]}</p>}
                                 </div>
-                                {activeRotJob && <p className="text-xs text-white/50">Suerte {activeRotJob.roturacion_seguimiento.suertes.codigo} · {laborLabel[activeRotJob.labor]}</p>}
                             </div>
+                            <button onClick={() => openRotEndModal(exec.id)} className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
+                                <Square size={18} fill="white" /> FINALIZAR
+                            </button>
                         </div>
-                        <button onClick={openRotEndModal} className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-3 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2">
-                            <Square size={18} fill="white" /> FINALIZAR
-                        </button>
                     </div>
-                </div>
-            )}
+                );
+            })}
 
             {/* Quick Actions */}
-            {!activeExecution && !activeRotExec && activeTab === 'labores' && (
+            {activeExecutions.length === 0 && activeRotExecs.length === 0 && activeTab === 'labores' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-4 mt-4 max-w-2xl mx-auto">
                     <button onClick={() => openStartModal('TRASLADO')} className="flex flex-col items-center justify-center gap-2 bg-blue-600/20 border border-blue-500/30 p-5 rounded-xl text-blue-200 hover:bg-blue-600/30 transition-all active:scale-95">
                         <Truck size={28} /><span className="font-bold text-sm">Registrar Traslado</span>
@@ -904,10 +950,9 @@ export default function OperatorDashboard() {
                     ) : (
                         <div className="space-y-4">
                             {jobs.map((job) => {
-                                const isActiveJob = activeExecution?.programacion_id === job.id;
-                                const isDisabled = (activeExecution !== null || activeRotExec !== null) && !isActiveJob;
+                                const isActiveJob = activeExecutions.some(e => e.programacion_id === job.id);
                                 return (
-                                    <div key={job.id} className={`relative overflow-hidden rounded-xl border p-5 transition-all ${isActiveJob ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-900/20' : 'border-white/10 bg-white/5'} ${isDisabled ? 'opacity-50 grayscale' : ''}`}>
+                                    <div key={job.id} className={`relative overflow-hidden rounded-xl border p-5 transition-all ${isActiveJob ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-900/20' : 'border-white/10 bg-white/5'}`}>
                                         {isActiveJob && <div className="absolute right-0 top-0 rounded-bl-xl bg-purple-500 px-3 py-1 text-xs font-bold text-white">EN PROGRESO</div>}
                                         <div className="mb-4 flex items-start justify-between">
                                             <div>
@@ -929,12 +974,12 @@ export default function OperatorDashboard() {
                                         </div>
                                         <div className="flex gap-3">
                                             {(job.estado === 'PROGRAMADO' || job.estado === 'ASIGNADO') && (
-                                                <button onClick={() => openStartModal('LABOR', job.id)} disabled={isDisabled} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-green-500 py-3 font-bold text-white shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
+                                                <button onClick={() => openStartModal('LABOR', job.id)} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-green-500 py-3 font-bold text-white shadow-lg transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
                                                     <Play className="h-5 w-5 fill-current" />INICIAR
                                                 </button>
                                             )}
                                             {job.estado === 'EN_EJECUCION' && isActiveJob && (
-                                                <button onClick={openEndModal} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 py-3 font-bold text-white shadow-lg transition-all active:scale-95">
+                                                <button onClick={() => openEndModal(activeExecutions.find(e => e.programacion_id === job.id)?.id || '')} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-red-600 to-red-500 py-3 font-bold text-white shadow-lg transition-all active:scale-95">
                                                     <Square className="h-5 w-5 fill-current" />FINALIZAR
                                                 </button>
                                             )}
@@ -967,11 +1012,10 @@ export default function OperatorDashboard() {
                                 const currentAvance = rs?.[avanceField[asig.labor]] || 0;
                                 const pct = asig.area_asignada > 0 ? Math.min(100, (currentAvance / asig.area_asignada) * 100) : 0;
                                 const isTerminado = currentEstado === 'TERMINADO';
-                                const isActive = activeRotExec?.asignacion_id === asig.id;
-                                const isOtherActive = (activeExecution !== null || activeRotExec !== null) && !isActive;
+                                const isActive = activeRotExecs.some(e => e.asignacion_id === asig.id);
 
                                 return (
-                                    <div key={asig.id} className={`rounded-xl border p-5 transition-all ${isActive ? 'border-purple-500/50 bg-purple-500/10' : isTerminado ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/5'} ${isOtherActive ? 'opacity-50 grayscale' : ''}`}>
+                                    <div key={asig.id} className={`rounded-xl border p-5 transition-all ${isActive ? 'border-purple-500/50 bg-purple-500/10' : isTerminado ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/5'}`}>
                                         {/* Header */}
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -1009,7 +1053,6 @@ export default function OperatorDashboard() {
                                         {!isTerminado && !isActive && (
                                             <button
                                                 onClick={() => openRotStartModal(asig.id)}
-                                                disabled={isOtherActive}
                                                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-50"
                                             >
                                                 <Play size={18} fill="white" /> INICIAR
@@ -1017,7 +1060,7 @@ export default function OperatorDashboard() {
                                         )}
                                         {isActive && (
                                             <button
-                                                onClick={openRotEndModal}
+                                                onClick={() => openRotEndModal(activeRotExecs.find(e => e.asignacion_id === asig.id)?.id || '')}
                                                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all active:scale-95"
                                             >
                                                 <Square size={18} fill="white" /> FINALIZAR
@@ -1265,17 +1308,6 @@ export default function OperatorDashboard() {
                             {showRotStartModal ? 'Iniciar Roturación' : 'Finalizar Roturación'}
                         </h2>
                         <div className="space-y-6">
-                            {/* Horómetro */}
-                            <div>
-                                <label className="block text-white/60 text-sm font-bold mb-2 ml-1">HORÓMETRO {showRotStartModal ? 'INICIAL' : 'FINAL'}</label>
-                                <div className="relative">
-                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" size={20} />
-                                    <input type="number" inputMode="decimal" step="0.1" value={horometro} onChange={e => setHorometro(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-12 pr-4 text-white text-xl font-bold focus:outline-none focus:border-purple-500 transition-all"
-                                        placeholder="0000.0" />
-                                </div>
-                            </div>
-
                             {/* Área (solo al finalizar) */}
                             {showRotEndModal && (
                                 <div>
@@ -1286,7 +1318,11 @@ export default function OperatorDashboard() {
                                             className="w-full bg-white/5 border border-white/20 rounded-xl py-4 pl-12 pr-4 text-white text-xl font-bold focus:outline-none focus:border-purple-500 transition-all"
                                             placeholder="0.00" />
                                     </div>
-                                    {activeRotJob && <p className="text-xs text-white/30 mt-1 ml-1">Asignado: {activeRotJob.area_asignada} ha</p>}
+                                    {(() => {
+                                        const exec = activeRotExecs.find(e => e.id === closingRotExecId);
+                                        const job = exec ? roturacionJobs.find(a => a.id === exec.asignacion_id) : null;
+                                        return job && <p className="text-xs text-white/30 mt-1 ml-1">Asignado: {job.area_asignada} ha</p>;
+                                    })()}
                                 </div>
                             )}
 
@@ -1320,8 +1356,8 @@ export default function OperatorDashboard() {
                             {/* Actions */}
                             <div className="grid grid-cols-2 gap-4 pt-2">
                                 <button onClick={() => { setShowRotStartModal(false); setShowRotEndModal(false); }} className="py-4 rounded-xl border border-white/10 text-white/60 font-bold hover:bg-white/5 transition-all">Cancelar</button>
-                                <button onClick={showRotStartModal ? handleStartRotExecution : handleStopRotExecution} disabled={!horometro || !gpsCoords || (showRotEndModal && !reportArea)}
-                                    className={`py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${(!horometro || !gpsCoords || (showRotEndModal && !reportArea)) ? 'bg-gray-600 opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-purple-500'}`}>
+                                <button onClick={showRotStartModal ? handleStartRotExecution : handleStopRotExecution} disabled={!gpsCoords || (showRotEndModal && !reportArea)}
+                                    className={`py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${(!gpsCoords || (showRotEndModal && !reportArea)) ? 'bg-gray-600 opacity-50 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-purple-500'}`}>
                                     {showRotStartModal ? <Play size={20} fill="white" /> : <Square size={20} fill="white" />}
                                     {showRotStartModal ? 'INICIAR' : 'TERMINAR'}
                                 </button>
