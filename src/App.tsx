@@ -10,6 +10,7 @@ import NewRequest from './pages/NewRequest';
 import OperatorDashboard from './pages/OperatorDashboard';
 import CostDashboard from './pages/CostDashboard';
 import Settings from './pages/Settings';
+import ConsultaArchivo from './pages/ConsultaArchivo';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
 import { Toaster } from 'react-hot-toast';
@@ -34,6 +35,7 @@ function App() {
                         <Route path="/operador" element={<OperatorDashboard />} />
                         <Route path="/costos" element={<CostDashboard />} />
                         <Route path="/settings" element={<Settings />} />
+                        <Route path="/consulta" element={<ConsultaArchivo />} />
                     </Route>
                 </Routes>
                 <SonnerToaster position="top-right" expand={true} richColors theme="dark" />

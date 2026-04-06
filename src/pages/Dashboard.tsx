@@ -1,5 +1,5 @@
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import TechnicianDashboard from './TechnicianDashboard';
 import ZoneManagerDashboard from './ZoneManagerDashboard';
 import OperatorDashboard from './OperatorDashboard';
 import AnalystDashboard from './AnalystDashboard';
@@ -13,7 +13,7 @@ export default function Dashboard() {
 
     // 1. Vista para TÉCNICOS (Luis Millan)
     if (profile?.rol === 'tecnico') {
-        return <TechnicianDashboard />;
+        return <Navigate to="/solicitudes" replace />;
     }
 
     // 2. Vista para JEFES DE ZONA (Leonardo/Walter)

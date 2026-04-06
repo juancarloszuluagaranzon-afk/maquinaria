@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers, Database, Settings } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, FileText, Kanban, CheckCircle, LogOut, X, Tractor, Clock, Layers, Database, Settings, FileSpreadsheet } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -90,6 +90,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <Database size={20} />
                         <span>Maestro</span>
                     </a>
+                    <NavLink to="/consulta" className={linkClass('/consulta')} onClick={() => onClose()}>
+                        <FileSpreadsheet size={20} />
+                        <span>Consulta Archivo</span>
+                    </NavLink>
                     <NavLink to="/settings" className={linkClass('/settings')} onClick={() => onClose()}>
                         <Settings size={20} />
                         <span>Configuración</span>
@@ -128,25 +132,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                         </>
                     )}
 
-                    {/* Enlaces Exclusivos TÉCNICOS */}
                     {role === 'tecnico' && (
                         <>
-                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Menú Técnico</div>
-                            <NavLink to="/dashboard" className={linkClass('/dashboard')} onClick={() => onClose()}>
-                                <LayoutDashboard size={20} />
-                                <span>Resumen</span>
-                            </NavLink>
-                            <NavLink to="/solicitudes/nueva" className={linkClass('/solicitudes/nueva')} onClick={() => onClose()}>
-                                <PlusCircle size={20} />
-                                <span>Nueva Solicitud</span>
-                            </NavLink>
-                            <NavLink to="/solicitudes" className={linkClass('/solicitudes')} onClick={() => onClose()}>
-                                <FileText size={20} />
-                                <span>Historial</span>
-                            </NavLink>
+                            <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2 px-3">Producción</div>
                             <NavLink to="/roturacion" className={linkClass('/roturacion')} onClick={() => onClose()}>
                                 <Layers size={20} />
                                 <span>Roturación</span>
+                            </NavLink>
+                            <NavLink to="/solicitudes" className={linkClass('/solicitudes')} onClick={() => onClose()}>
+                                <FileText size={20} />
+                                <span>Firma Recibos</span>
                             </NavLink>
                         </>
                     )}
