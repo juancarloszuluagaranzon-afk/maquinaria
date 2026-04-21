@@ -205,12 +205,6 @@ export default function TechnicianDashboard() {
     };
 
     const fetchMyRequests = async () => {
-        // Technically this tab should be hidden for technicians now, 
-        // but we'll return empty list to be safe if they somehow see it.
-        if (profile?.rol === 'tecnico') {
-            setRequests([]);
-            return;
-        }
         try {
             if (!user) return;
 
@@ -377,7 +371,7 @@ export default function TechnicianDashboard() {
                 <header className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold text-white tracking-tight">
-                            {profile?.rol === 'tecnico' ? 'Firma de Recibos' : 'Mis Solicitudes'}
+                            Mis Solicitudes
                         </h1>
                         <p className="text-white/60">Zona {profile?.zona} • {profile?.nombre}</p>
                     </div>
@@ -392,14 +386,12 @@ export default function TechnicianDashboard() {
 
                 {/* Tabs */}
                 <div className="flex gap-4 border-b border-white/10 pb-4 overflow-x-auto">
-                    {profile?.rol !== 'tecnico' && (
-                        <button
-                            onClick={() => setActiveTab('solicitudes')}
-                            className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'solicitudes' ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
-                        >
-                            Mis Solicitudes
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setActiveTab('solicitudes')}
+                        className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'solicitudes' ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    >
+                        Mis Solicitudes
+                    </button>
                     <button
                         onClick={() => setActiveTab('ejecuciones')}
                         className={`px-4 py-2 rounded-lg font-bold transition-all whitespace-nowrap ${activeTab === 'ejecuciones' ? 'bg-blue-500 text-black' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
@@ -690,17 +682,15 @@ export default function TechnicianDashboard() {
                 )}
 
                 {/* FAB (Floating Action Button) - Botón Flotante para Crear */}
-                {profile?.rol !== 'tecnico' && (
-                    <div className="fixed bottom-6 right-6 z-50">
-                        <button
-                            onClick={() => navigate('/solicitudes/nueva')}
-                            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 px-6 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all transform hover:scale-105 active:scale-95"
-                        >
-                            <Plus size={24} />
-                            <span>Nueva Solicitud</span>
-                        </button>
-                    </div>
-                )}
+                <div className="fixed bottom-6 right-6 z-50">
+                    <button
+                        onClick={() => navigate('/solicitudes/nueva')}
+                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold py-4 px-6 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all transform hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={24} />
+                        <span>Nueva Solicitud</span>
+                    </button>
+                </div>
             </div>
         </div>
     );

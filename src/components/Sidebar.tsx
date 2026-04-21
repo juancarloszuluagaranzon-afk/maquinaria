@@ -143,6 +143,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                                 <FileText size={20} />
                                 <span>Firma Recibos</span>
                             </NavLink>
+                            <NavLink to="/solicitudes/nueva" className={linkClass('/solicitudes/nueva')} onClick={() => onClose()}>
+                                <PlusCircle size={20} />
+                                <span>Nueva Solicitud</span>
+                            </NavLink>
                         </>
                     )}
 
